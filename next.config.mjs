@@ -10,7 +10,7 @@ const nextConfig = {
             },
             {
                 protocol: "https",
-                hostname: "back.studyportal.com",
+                hostname: "back.universitiesforllm.com",
                 pathname: "/uploads/**",
             },
         ],
