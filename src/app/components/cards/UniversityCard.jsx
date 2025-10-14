@@ -113,13 +113,12 @@ export default function UniversityCard({ university = {}, isActive, onFavorite }
                         {name}
                     </h3>
                     <div className="flex items-center justify-center gap-1 text-sm text-gray-500 mt-1">
-                     
-
                         <MapPin className="h-4 w-4" />
                         <span>
-                            {location?.city
-                                ? `${location.city}${location.state ? `, ${location.state}` : ""}${location.country ? `, ${location.country}` : ""}`
-                                : location?.country || "Location unavailable"}
+                            {university.locationText ||
+                                (location?.city
+                                    ? `${location.city}${location.state ? `, ${location.state}` : ""}${location.country ? `, ${location.country}` : ""}`
+                                    : location?.country || "Location unavailable")}
                         </span>
                         {location?.flag && (
                             <Image
@@ -131,6 +130,7 @@ export default function UniversityCard({ university = {}, isActive, onFavorite }
                             />
                         )}
                     </div>
+
 
                 </div>
 

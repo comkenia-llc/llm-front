@@ -3,7 +3,6 @@ import UniversityCard from "@/app/components/cards/UniversityCard";
 // ✅ Always fresh SSR data
 export const revalidate = 0;
 
-// ✅ 1. Dynamic SEO metadata
 export async function generateMetadata() {
     const base = process.env.NEXT_PUBLIC_API_URL || "https://back.universitiesforllm.com";
     const site = "https://universitiesforllm.com";
@@ -11,6 +10,16 @@ export async function generateMetadata() {
     const res = await fetch(`${base}/api/universities?limit=100`, { cache: "no-store" });
     const data = await res.json();
     const universities = data.items || data || [];
+
+    console.log("🧠 [generateMetadata] Universities fetched:", universities.length);
+    if (universities.length > 0) {
+        console.log("🔹 Sample University:", {
+            id: universities[0]?.id,
+            name: universities[0]?.name,
+            hasLocation: !!universities[0]?.location,
+            location: universities[0]?.location,
+        });
+    }
 
     const total = universities.length;
 
@@ -45,12 +54,34 @@ export async function generateMetadata() {
     };
 }
 
-// ✅ 2. Page Component
+// ✅ Main Page Component
 export default async function UniversitiesPage() {
     const base = process.env.NEXT_PUBLIC_API_URL || "https://back.universitiesforllm.com";
+    console.log("🌐 Fetching universities from:", `${base}/api/universities?limit=100`);
+
     const res = await fetch(`${base}/api/universities?limit=100`, { cache: "no-store" });
-    const data = await res.json();
+    console.log("📡 API response status:", res.status);
+
+    let data = {};
+    try {
+        data = await res.json();
+    } catch (err) {
+        console.error("❌ Error parsing JSON from API:", err);
+    }
+
     const universities = data.items || data || [];
+    console.log(`🎓 Total universities fetched: ${universities.length}`);
+
+    // 🔍 Log 3 sample entries to inspect structure
+    universities.slice(0, 3).forEach((u, i) => {
+        console.log(`➡️ University [${i + 1}]`, {
+            id: u.id,
+            name: u.name,
+            locationId: u.locationId,
+            location: u.location,
+            hasLocation: !!u.location,
+        });
+    });
 
     // ✅ Build Google JSON-LD Schema
     const jsonLd = {
@@ -88,7 +119,7 @@ export default async function UniversitiesPage() {
                             key={uni.id}
                             university={{
                                 ...uni,
-                                location: uni.location
+                                locationText: uni.location
                                     ? `${uni.location.city || ""}, ${uni.location.country || ""}`
                                     : "Unknown",
                                 programsCount: uni.programs?.length || 0,
@@ -99,6 +130,7 @@ export default async function UniversitiesPage() {
                                 featured: uni.isFeatured,
                             }}
                         />
+
                     ))}
                 </div>
 
