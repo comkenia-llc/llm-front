@@ -3,7 +3,6 @@ import "./globals.css";
 import Header from "./components/Header";
 import Footer from "./components/layout/Footer";
 import { AuthProvider } from "@/context/AuthContext";
-import Hero from "./components/Hero";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
