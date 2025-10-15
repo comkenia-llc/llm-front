@@ -19,6 +19,7 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
         schemaType: "Place",
         faqSchema: "",
         tags: "",
+        isFeatured: false, // ✅ new field
     });
 
     const [countries, setCountries] = useState([]);
@@ -44,23 +45,28 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
                 schemaType: editing.schemaType || "Place",
                 faqSchema: JSON.stringify(editing.faqSchema || "", null, 2),
                 tags: Array.isArray(editing.tags) ? editing.tags.join(", ") : (editing.tags || ""),
+                isFeatured: editing.isFeatured || false, // ✅ prefill
             });
 
-            // Auto-open SEO if it already has data
             if (editing.seoTitle || editing.seoDescription) {
                 setShowSEO(true);
             }
         }
     }, [editing]);
 
-    // 🧠 Fetch all countries
+    // 🧠 Fetch all countries for parent selection
     useEffect(() => {
-        axiosClient.get("/api/locations/countries").then((res) => setCountries(res.data));
+        axiosClient.get("/api/locations?type=country").then((res) => {
+            setCountries(res.data.items || res.data || []);
+        });
     }, []);
 
     const handleChange = (e) => {
-        const { name, value, files } = e.target;
-        setForm({ ...form, [name]: files ? files[0] : value });
+        const { name, value, files, type, checked } = e.target;
+        setForm({
+            ...form,
+            [name]: files ? files[0] : type === "checkbox" ? checked : value,
+        });
     };
 
     const handleSubmit = async (e) => {
@@ -72,7 +78,7 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
                 if (form[k] !== null && form[k] !== undefined) fd.append(k, form[k]);
             });
 
-            // Convert JSON-like fields properly
+            // Convert structured fields properly
             if (form.faqSchema && typeof form.faqSchema === "string") {
                 try {
                     const parsed = JSON.parse(form.faqSchema);
@@ -109,7 +115,7 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
             <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg overflow-y-auto max-h-[90vh]">
                 <h2 className="text-xl font-semibold mb-4">
-                    {editing ? "Edit Location" : parent ? `Add child under ${parent.country || parent.city}` : "Add Country"}
+                    {editing ? "Edit Location" : parent ? `Add child under ${parent.country || parent.city}` : "Add Location"}
                 </h2>
 
                 <form onSubmit={handleSubmit} className="space-y-3">
@@ -145,8 +151,8 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
                         </select>
                     )}
 
-                    {/* Country / City / State */}
-                    {form.type === "country" && (
+                    {/* Country / City / State inputs */}
+                    {form.type === "country" ? (
                         <>
                             <input
                                 name="country"
@@ -158,7 +164,7 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
                             />
                             <input
                                 name="countryCode"
-                                placeholder="Country Code (e.g. PK, US)"
+                                placeholder="Country Code (e.g. US, PK)"
                                 value={form.countryCode}
                                 onChange={handleChange}
                                 className="w-full border p-2 rounded"
@@ -171,9 +177,7 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
                                 className="w-full border p-2 rounded"
                             />
                         </>
-                    )}
-
-                    {form.type !== "country" && (
+                    ) : (
                         <input
                             name={form.type}
                             placeholder={`${form.type.charAt(0).toUpperCase() + form.type.slice(1)} Name`}
@@ -183,6 +187,21 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
                             required
                         />
                     )}
+
+                    {/* ✅ Featured Toggle */}
+                    <div className="flex items-center gap-2 mt-3">
+                        <input
+                            type="checkbox"
+                            id="isFeatured"
+                            name="isFeatured"
+                            checked={form.isFeatured}
+                            onChange={handleChange}
+                            className="h-4 w-4"
+                        />
+                        <label htmlFor="isFeatured" className="text-sm text-gray-700">
+                            Mark as Featured Location (show on homepage)
+                        </label>
+                    </div>
 
                     {/* 🧠 SEO Section Toggle */}
                     <div className="border-t pt-3 mt-3">
@@ -195,7 +214,7 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
                         </button>
                     </div>
 
-                    {/* SEO Fields */}
+                    {/* SEO & Rich Data Section */}
                     {showSEO && (
                         <div className="bg-gray-50 border p-3 rounded space-y-2 mt-2">
                             <input
@@ -234,7 +253,6 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
                                 className="w-full border p-2 rounded"
                             />
 
-                            {/* Rich Result (JSON-LD) */}
                             <h4 className="font-medium mt-3 text-gray-700">Structured Data (JSON-LD)</h4>
                             <select
                                 name="schemaType"
@@ -264,6 +282,7 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
                         </div>
                     )}
 
+                    {/* Submit */}
                     <div className="flex justify-end gap-3 mt-4">
                         <button
                             type="button"

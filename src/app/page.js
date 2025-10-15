@@ -7,12 +7,14 @@ import FeaturedProgrammesSection from "./components/sections/FeaturedProgrammeSe
 import FeaturedUniversitiesSection from "./components/sections/FeaturedUniversitySection";
 import FeaturedArticlesSection from "./components/sections/FeaturedArticlesSection";
 import LatestNewsSection from "./components/sections/LatestNewsSection";
+import FeaturedLocationsSection from "./components/sections/FeaturedLocationsSection";
 
 export default function Home() {
   return (
     <>
       <Hero />
       <DisciplineGrid />
+      <FeaturedLocationsSection/>
       <FeaturedUniversitiesSection />
       <ScholarshipsSection />
       {/* <ScholarRecipientsSection /> */}
