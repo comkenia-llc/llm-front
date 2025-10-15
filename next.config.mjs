@@ -13,6 +13,11 @@ const nextConfig = {
                 hostname: "back.universitiesforllm.com",
                 pathname: "/uploads/**",
             },
+            {
+                protocol: "http",
+                hostname: "back.universitiesforllm.com",
+                pathname: "/uploads/**",
+            },
         ],
     },
 };
