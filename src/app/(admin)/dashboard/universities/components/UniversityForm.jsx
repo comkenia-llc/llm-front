@@ -39,6 +39,8 @@ export default function UniversityForm({ editing, onClose, onSaved }) {
     );
 
     const [locations, setLocations] = useState([]);
+    const [loading, setLoading] = useState(false);
+
     const [previewLogo, setPreviewLogo] = useState(
         editing?.logo ? `${process.env.NEXT_PUBLIC_API_URL}${editing.logo}` : null
     );
@@ -48,16 +50,14 @@ export default function UniversityForm({ editing, onClose, onSaved }) {
     const [previewMeta, setPreviewMeta] = useState(
         editing?.metaImage ? `${process.env.NEXT_PUBLIC_API_URL}${editing.metaImage}` : null
     );
-    const [loading, setLoading] = useState(false);
 
-    // ✅ Load locations
+    // ✅ Fetch hierarchical location tree
     useEffect(() => {
-        axiosClient.get("/api/locations").then((res) => {
-            setLocations(res.data.items || []);
+        axiosClient.get("/api/locations/tree").then((res) => {
+            setLocations(res.data || []);
         });
     }, []);
 
-    // ✅ Handle change
     const handleChange = (e) => {
         const { name, value, files } = e.target;
 
@@ -77,16 +77,15 @@ export default function UniversityForm({ editing, onClose, onSaved }) {
         }
     };
 
-    // ✅ Handle submit
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-
         try {
             const fd = new FormData();
             for (const key in form) {
-                if (form[key] !== null && form[key] !== undefined)
+                if (form[key] !== null && form[key] !== undefined) {
                     fd.append(key, form[key]);
+                }
             }
 
             if (editing) {
@@ -108,8 +107,21 @@ export default function UniversityForm({ editing, onClose, onSaved }) {
         }
     };
 
+    // 🔹 Recursive render of hierarchical locations
+    const renderLocationOptions = (nodes, level = 0) => {
+        return nodes.map((loc) => (
+            <Fragment key={loc.id}>
+                <option value={loc.id}>
+                    {`${"— ".repeat(level)}${loc.country || loc.state || loc.city}`}
+                </option>
+                {loc.children && loc.children.length > 0 &&
+                    renderLocationOptions(loc.children, level + 1)}
+            </Fragment>
+        ));
+    };
+
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
             <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-3xl overflow-y-auto max-h-[90vh]">
                 <h2 className="text-xl font-semibold mb-4">
                     {editing ? "Edit University" : "Add New University"}
@@ -127,21 +139,22 @@ export default function UniversityForm({ editing, onClose, onSaved }) {
                         required
                     />
 
-                    {/* 🌍 Location */}
-                    <select
-                        name="locationId"
-                        value={form.locationId}
-                        onChange={handleChange}
-                        className="w-full border p-2 rounded"
-                        required
-                    >
-                        <option value="">Select Location</option>
-                        {locations.map((loc) => (
-                            <option key={loc.id} value={loc.id}>
-                                {loc.city}, {loc.country}
-                            </option>
-                        ))}
-                    </select>
+                    {/* 🌍 Hierarchical Location */}
+                    <div>
+                        <label className="block text-sm font-medium mb-1">
+                            🌍 Select Location
+                        </label>
+                        <select
+                            name="locationId"
+                            value={form.locationId}
+                            onChange={handleChange}
+                            className="w-full border p-2 rounded"
+                            required
+                        >
+                            <option value="">Select Location</option>
+                            {renderLocationOptions(locations)}
+                        </select>
+                    </div>
 
                     {/* 🏷 Type + Status */}
                     <div className="flex gap-3">
@@ -229,7 +242,9 @@ export default function UniversityForm({ editing, onClose, onSaved }) {
 
                         {/* Meta Image */}
                         <div>
-                            <label className="block text-sm font-medium mb-1">Meta Image (SEO)</label>
+                            <label className="block text-sm font-medium mb-1">
+                                Meta Image (SEO)
+                            </label>
                             {previewMeta && (
                                 <img
                                     src={previewMeta}
@@ -249,40 +264,34 @@ export default function UniversityForm({ editing, onClose, onSaved }) {
 
                     {/* 🔍 SEO Fields */}
                     <div className="mt-6 border-t pt-4">
-                        <h3 className="font-semibold text-gray-700 mb-3">
-                            🔍 SEO Optimization
-                        </h3>
-
+                        <h3 className="font-semibold text-gray-700 mb-3">🔍 SEO Optimization</h3>
                         <input
                             type="text"
                             name="seoTitle"
-                            placeholder="SEO Title (e.g., 'Top LLM Universities in UK 2025')"
+                            placeholder="SEO Title"
                             value={form.seoTitle}
                             onChange={handleChange}
                             className="w-full border p-2 rounded mb-3"
                         />
-
                         <textarea
                             name="seoDescription"
-                            placeholder="SEO Description (shown in Google results)"
+                            placeholder="SEO Description"
                             value={form.seoDescription}
                             onChange={handleChange}
                             className="w-full border p-2 rounded mb-3 min-h-[80px]"
                         />
-
                         <input
                             type="text"
                             name="seoKeywords"
-                            placeholder="SEO Keywords (comma-separated)"
+                            placeholder="SEO Keywords"
                             value={form.seoKeywords}
                             onChange={handleChange}
                             className="w-full border p-2 rounded mb-3"
                         />
-
                         <input
                             type="text"
                             name="canonicalUrl"
-                            placeholder="Canonical URL (auto or custom)"
+                            placeholder="Canonical URL"
                             value={form.canonicalUrl}
                             onChange={handleChange}
                             className="w-full border p-2 rounded"
@@ -311,3 +320,5 @@ export default function UniversityForm({ editing, onClose, onSaved }) {
         </div>
     );
 }
+
+import { Fragment } from "react";

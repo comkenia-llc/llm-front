@@ -11,22 +11,30 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
         type: "country",
         parentId: parent?.id || null,
         flag: null,
+        image: null,
+        metaImage: null,
         seoTitle: "",
         seoDescription: "",
         seoKeywords: "",
         canonicalUrl: "",
-        metaImage: null,
         schemaType: "Place",
         faqSchema: "",
         tags: "",
-        isFeatured: false, // ✅ new field
+        isFeatured: false,
     });
 
     const [countries, setCountries] = useState([]);
     const [loading, setLoading] = useState(false);
     const [showSEO, setShowSEO] = useState(false);
 
-    // ✅ Prefill form when editing
+    // ✅ Preview URLs for uploads
+    const [previews, setPreviews] = useState({
+        flag: null,
+        image: null,
+        metaImage: null,
+    });
+
+    // 🧠 Prefill form when editing
     useEffect(() => {
         if (editing) {
             setForm({
@@ -36,25 +44,30 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
                 city: editing.city || "",
                 type: editing.type || "country",
                 parentId: editing.parentId || null,
-                flag: editing.flag || null,
+                flag: null, // handled separately below
+                image: null,
+                metaImage: null,
                 seoTitle: editing.seoTitle || "",
                 seoDescription: editing.seoDescription || "",
                 seoKeywords: editing.seoKeywords || "",
                 canonicalUrl: editing.canonicalUrl || "",
-                metaImage: editing.metaImage || null,
                 schemaType: editing.schemaType || "Place",
                 faqSchema: JSON.stringify(editing.faqSchema || "", null, 2),
                 tags: Array.isArray(editing.tags) ? editing.tags.join(", ") : (editing.tags || ""),
-                isFeatured: editing.isFeatured || false, // ✅ prefill
+                isFeatured: editing.isFeatured || false,
             });
 
-            if (editing.seoTitle || editing.seoDescription) {
-                setShowSEO(true);
-            }
+            setPreviews({
+                flag: editing.flag ? `${process.env.NEXT_PUBLIC_API_URL}${editing.flag}` : null,
+                image: editing.image ? `${process.env.NEXT_PUBLIC_API_URL}${editing.image}` : null,
+                metaImage: editing.metaImage ? `${process.env.NEXT_PUBLIC_API_URL}${editing.metaImage}` : null,
+            });
+
+            if (editing.seoTitle || editing.seoDescription) setShowSEO(true);
         }
     }, [editing]);
 
-    // 🧠 Fetch all countries for parent selection
+    // 🧠 Fetch all countries for parent dropdown
     useEffect(() => {
         axiosClient.get("/api/locations?type=country").then((res) => {
             setCountries(res.data.items || res.data || []);
@@ -63,30 +76,36 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
 
     const handleChange = (e) => {
         const { name, value, files, type, checked } = e.target;
-        setForm({
-            ...form,
-            [name]: files ? files[0] : type === "checkbox" ? checked : value,
-        });
+        const val = files ? files[0] : type === "checkbox" ? checked : value;
+
+        setForm({ ...form, [name]: val });
+
+        // 🔄 Live preview for image uploads
+        if (files && files[0]) {
+            const url = URL.createObjectURL(files[0]);
+            setPreviews((prev) => ({ ...prev, [name]: url }));
+        }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (form.faqSchema.trim()) {
+            try {
+                JSON.parse(form.faqSchema);
+            } catch {
+                alert("❌ Invalid JSON format in FAQ Schema. Please fix it before saving.");
+                return;
+            }
+        }
+
         setLoading(true);
         try {
             const fd = new FormData();
             Object.keys(form).forEach((k) => {
+                if ((k === "flag" || k === "image" || k === "metaImage") && !form[k]) return;
                 if (form[k] !== null && form[k] !== undefined) fd.append(k, form[k]);
             });
-
-            // Convert structured fields properly
-            if (form.faqSchema && typeof form.faqSchema === "string") {
-                try {
-                    const parsed = JSON.parse(form.faqSchema);
-                    fd.set("faqSchema", JSON.stringify(parsed));
-                } catch {
-                    console.warn("Invalid JSON for faqSchema — skipping");
-                }
-            }
 
             if (form.tags && typeof form.tags === "string") {
                 const tagsArray = form.tags
@@ -96,10 +115,23 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
                 fd.set("tags", JSON.stringify(tagsArray));
             }
 
+            if (form.faqSchema && typeof form.faqSchema === "string") {
+                try {
+                    const parsed = JSON.parse(form.faqSchema);
+                    fd.set("faqSchema", JSON.stringify(parsed));
+                } catch {
+                    console.warn("Invalid JSON for faqSchema — skipping");
+                }
+            }
+
             if (editing) {
-                await axiosClient.put(`/api/locations/${editing.id}`, fd);
+                await axiosClient.put(`/api/locations/${editing.id}`, fd, {
+                    headers: { "Content-Type": "multipart/form-data" },
+                });
             } else {
-                await axiosClient.post(`/api/locations`, fd);
+                await axiosClient.post(`/api/locations`, fd, {
+                    headers: { "Content-Type": "multipart/form-data" },
+                });
             }
 
             onSaved();
@@ -151,7 +183,7 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
                         </select>
                     )}
 
-                    {/* Country / City / State inputs */}
+                    {/* Country / City / State input */}
                     {form.type === "country" ? (
                         <>
                             <input
@@ -169,13 +201,6 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
                                 onChange={handleChange}
                                 className="w-full border p-2 rounded"
                             />
-                            <input
-                                type="file"
-                                name="flag"
-                                accept="image/*"
-                                onChange={handleChange}
-                                className="w-full border p-2 rounded"
-                            />
                         </>
                     ) : (
                         <input
@@ -188,7 +213,7 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
                         />
                     )}
 
-                    {/* ✅ Featured Toggle */}
+                    {/* ✅ Featured toggle */}
                     <div className="flex items-center gap-2 mt-3">
                         <input
                             type="checkbox"
@@ -203,7 +228,70 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
                         </label>
                     </div>
 
-                    {/* 🧠 SEO Section Toggle */}
+                    {/* 🏳 Flag Image */}
+                    <div className="mt-4">
+                        <label className="block text-sm font-medium text-gray-700">
+                            Country/Region Flag (small icon)
+                        </label>
+                        <input
+                            type="file"
+                            name="flag"
+                            accept="image/*"
+                            onChange={handleChange}
+                            className="w-full border p-2 rounded"
+                        />
+                        {previews.flag && (
+                            <img
+                                src={previews.flag}
+                                alt="Flag preview"
+                                className="mt-2 w-16 h-10 object-cover border rounded"
+                            />
+                        )}
+                    </div>
+
+                    {/* 🏙 Main Location Image */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                            Main Image (used on public cards)
+                        </label>
+                        <input
+                            type="file"
+                            name="image"
+                            accept="image/*"
+                            onChange={handleChange}
+                            className="w-full border p-2 rounded"
+                        />
+                        {previews.image && (
+                            <img
+                                src={previews.image}
+                                alt="Location preview"
+                                className="mt-2 w-full h-32 object-cover border rounded"
+                            />
+                        )}
+                    </div>
+
+                    {/* 🌐 SEO Meta Image */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                            SEO / Meta Image (used for Open Graph & social sharing)
+                        </label>
+                        <input
+                            type="file"
+                            name="metaImage"
+                            accept="image/*"
+                            onChange={handleChange}
+                            className="w-full border p-2 rounded"
+                        />
+                        {previews.metaImage && (
+                            <img
+                                src={previews.metaImage}
+                                alt="Meta preview"
+                                className="mt-2 w-full h-32 object-cover border rounded"
+                            />
+                        )}
+                    </div>
+
+                    {/* 🧠 SEO Section */}
                     <div className="border-t pt-3 mt-3">
                         <button
                             type="button"
@@ -214,7 +302,6 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
                         </button>
                     </div>
 
-                    {/* SEO & Rich Data Section */}
                     {showSEO && (
                         <div className="bg-gray-50 border p-3 rounded space-y-2 mt-2">
                             <input
@@ -245,14 +332,6 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
                                 onChange={handleChange}
                                 className="w-full border p-2 rounded"
                             />
-                            <input
-                                type="file"
-                                name="metaImage"
-                                accept="image/*"
-                                onChange={handleChange}
-                                className="w-full border p-2 rounded"
-                            />
-
                             <h4 className="font-medium mt-3 text-gray-700">Structured Data (JSON-LD)</h4>
                             <select
                                 name="schemaType"
