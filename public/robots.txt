@@ -1,0 +1,14 @@
+User-agent: *
+# 🚫 Block admin & backend routes
+Disallow: /(admin)/
+Disallow: /dashboard/
+Disallow: /api/
+Disallow: /auth/
+Disallow: /context/
+Disallow: /components/
+
+# ✅ Allow everything else
+Allow: /
+
+# 📍 Sitemap location
+Sitemap: https://universitiesforllm.com/sitemap.xml
