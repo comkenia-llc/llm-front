@@ -1,5 +1,4 @@
 // app/programs/page.jsx
-import axiosClient from "@/lib/axios";
 import ProgrammeCard from "@/app/components/cards/ProgrammeCard";
 
 export const revalidate = 0; // always fresh
@@ -25,6 +24,7 @@ export default async function ProgramsPage() {
 
     return (
         <div className="max-w-6xl mx-auto px-4 py-10">
+            
             <h1 className="text-3xl sm:text-4xl font-bold mb-6 text-gray-900">
                 Explore Study Programs
             </h1>

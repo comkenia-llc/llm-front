@@ -1,6 +1,7 @@
 import axios from "axios";
 
-export const revalidate = 3600; // rebuild every hour
+export const dynamic = "force-dynamic"; // ✅ Always fetch fresh
+export const revalidate = 3600; // Rebuild every hour
 
 export default async function sitemap() {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://universitiesforllm.com";
@@ -13,34 +14,45 @@ export default async function sitemap() {
             axios.get(`${apiBase}/api/locations?type=country&limit=200`).catch(() => ({ data: [] })),
         ]);
 
-        const universities = Array.isArray(uniRes.data)
-            ? uniRes.data
-            : uniRes.data.items || uniRes.data.data || [];
-        const programs = Array.isArray(progRes.data)
-            ? progRes.data
-            : progRes.data.items || progRes.data.data || [];
-        const locations = Array.isArray(locRes.data)
-            ? locRes.data
-            : locRes.data.items || locRes.data.data || [];
+        const universities = uniRes.data.items || uniRes.data || [];
+        const programs = progRes.data.items || progRes.data || [];
+        const locations = locRes.data.items || locRes.data || [];
 
-        return [
+        const staticPages = [
             { url: `${baseUrl}/`, lastModified: new Date() },
             { url: `${baseUrl}/universities`, lastModified: new Date() },
-            { url: `${baseUrl}/programmes`, lastModified: new Date() },
+            { url: `${baseUrl}/programs`, lastModified: new Date() },
             { url: `${baseUrl}/locations`, lastModified: new Date() },
-            ...universities.map((u) => ({
-                url: `${baseUrl}/universities/${u.slug}`,
-                lastModified: u.updatedAt || new Date(),
-            })),
-            ...programs.map((p) => ({
-                url: `${baseUrl}/programmes/${p.slug}`,
-                lastModified: p.updatedAt || new Date(),
-            })),
-            ...locations.map((l) => ({
-                url: `${baseUrl}/locations/${l.slug}`,
-                lastModified: l.updatedAt || new Date(),
-            })),
+            { url: `${baseUrl}/about`, lastModified: new Date() },
+            { url: `${baseUrl}/contact`, lastModified: new Date() },
+            { url: `${baseUrl}/privacy-policy`, lastModified: new Date() },
+            { url: `${baseUrl}/terms`, lastModified: new Date() },
         ];
+
+        const dynamicUrls = [
+            ...universities
+                .filter((u) => u.slug)
+                .map((u) => ({
+                    url: `${baseUrl}/universities/${u.slug}`,
+                    lastModified: u.updatedAt ? new Date(u.updatedAt) : new Date(),
+                })),
+
+            ...programs
+                .filter((p) => p.slug)
+                .map((p) => ({
+                    url: `${baseUrl}/programs/${p.slug}`,
+                    lastModified: p.updatedAt ? new Date(p.updatedAt) : new Date(),
+                })),
+
+            ...locations
+                .filter((l) => l.slug)
+                .map((l) => ({
+                    url: `${baseUrl}/locations/${l.slug}`,
+                    lastModified: l.updatedAt ? new Date(l.updatedAt) : new Date(),
+                })),
+        ];
+
+        return [...staticPages, ...dynamicUrls];
     } catch (err) {
         console.error("❌ Sitemap generation error:", err.message);
         return [{ url: baseUrl, lastModified: new Date() }];

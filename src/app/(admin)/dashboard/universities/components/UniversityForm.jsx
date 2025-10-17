@@ -179,6 +179,58 @@ export default function UniversityForm({ editing, onClose, onSaved }) {
                             <option value="approved">Approved</option>
                             <option value="rejected">Rejected</option>
                         </select>
+
+                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                            <input
+                                type="checkbox"
+                                name="isFeatured"
+                                checked={form.isFeatured}
+                                onChange={(e) =>
+                                    setForm({ ...form, isFeatured: e.target.checked })
+                                }
+                                className="w-4 h-4 accent-blue-600"
+                            />
+                            Featured
+                        </label>
+                        
+                    </div>
+
+                    {/* 🎓 Program Modes */}
+                    <div className="mt-4">
+                        <label className="block text-sm font-medium mb-2 text-gray-700">
+                            🎓 Mode(s) of Study
+                        </label>
+                        <div className="flex flex-wrap gap-4">
+                            {["on-campus", "online", "hybrid"].map((mode) => (
+                                <label
+                                    key={mode}
+                                    className="flex items-center gap-2 border px-3 py-2 rounded-md cursor-pointer hover:border-blue-500 transition"
+                                >
+                                    <input
+                                        type="checkbox"
+                                        value={mode}
+                                        checked={
+                                            Array.isArray(form.programModes) &&
+                                            form.programModes.includes(mode)
+                                        }
+                                        onChange={(e) => {
+                                            const checked = e.target.checked;
+                                            const current = Array.isArray(form.programModes)
+                                                ? [...form.programModes]
+                                                : [];
+                                            const newModes = checked
+                                                ? [...current, mode]
+                                                : current.filter((m) => m !== mode);
+                                            setForm({ ...form, programModes: newModes });
+                                        }}
+                                        className="w-4 h-4 accent-blue-600"
+                                    />
+                                    <span className="capitalize text-gray-700">
+                                        {mode.replace("-", " ")}
+                                    </span>
+                                </label>
+                            ))}
+                        </div>
                     </div>
 
                     {/* 🌐 Website */}

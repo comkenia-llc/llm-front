@@ -24,12 +24,24 @@ export default function UniversityCard({ university = {}, isActive, onFavorite }
     let parsedModes = [];
 
     try {
-        parsedModes = Array.isArray(programModes)
-            ? programModes
-            : JSON.parse(programModes || "[]");
+        if (Array.isArray(programModes)) {
+            // If array elements contain commas or brackets, normalize
+            parsedModes = programModes
+                .flatMap((m) => (typeof m === "string" ? m.split(",") : []))
+                .map((m) => m.replace(/[\[\]"]/g, "").trim())
+                .filter(Boolean);
+        } else if (typeof programModes === "string") {
+            // Remove any JSON-style brackets and quotes, then split
+            parsedModes = programModes
+                .replace(/[\[\]"]/g, "")
+                .split(",")
+                .map((m) => m.trim())
+                .filter(Boolean);
+        }
     } catch {
         parsedModes = [];
     }
+
 
     const studyModeText = parsedModes.length
         ? parsedModes
@@ -170,19 +182,18 @@ export default function UniversityCard({ university = {}, isActive, onFavorite }
                 <div className="mt-3 flex flex-wrap justify-center gap-2">
                     {parsedModes.length > 0 ? (
                         parsedModes.map((mode) => {
-                            // Map different colors per mode
                             const colorMap = {
-                                "on-campus": "bg-green-100 text-green-700",
-                                online: "bg-blue-100 text-blue-700",
-                                blended: "bg-purple-100 text-purple-700",
-                                "part-time": "bg-yellow-100 text-yellow-700",
-                                "full-time": "bg-pink-100 text-pink-700",
+                                "on-campus": "bg-green-100 text-green-800 border border-green-200",
+                                online: "bg-blue-100 text-blue-800 border border-blue-200",
+                                hybrid: "bg-purple-100 text-purple-800 border border-purple-200",
+                                blended: "bg-indigo-100 text-indigo-800 border border-indigo-200",
+                                "part-time": "bg-amber-100 text-amber-800 border border-amber-200",
+                                "full-time": "bg-pink-100 text-pink-800 border border-pink-200",
                             };
 
                             const normalized = mode.toLowerCase();
-                            const colors = colorMap[normalized] || "bg-gray-100 text-gray-700";
+                            const colors = colorMap[normalized] || "bg-gray-100 text-gray-700 border border-gray-200";
 
-                            // Capitalize words (e.g. On Campus)
                             const label = mode
                                 .replace("-", " ")
                                 .replace(/\b\w/g, (c) => c.toUpperCase());
@@ -190,7 +201,7 @@ export default function UniversityCard({ university = {}, isActive, onFavorite }
                             return (
                                 <span
                                     key={mode}
-                                    className={`px-2 py-0.5 text-xs font-medium rounded-full ${colors}`}
+                                    className={`px-3 py-1 text-xs sm:text-sm font-medium rounded-full shadow-sm ${colors} transition-transform hover:scale-105`}
                                 >
                                     {label}
                                 </span>
@@ -200,6 +211,8 @@ export default function UniversityCard({ university = {}, isActive, onFavorite }
                         <span className="text-gray-500 text-xs italic">On Campus</span>
                     )}
                 </div>
+
+
 
             </div>
         </Link>

@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Search, Heart, User, Rocket, Menu, X, LogOut } from "lucide-react";
+import { Heart, User, Rocket, Menu, X, LogOut } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
+import HeaderSearchBox from "./HeaderSearchBox";
 
 export default function Header() {
     const [query, setQuery] = useState("");
@@ -14,6 +16,30 @@ export default function Header() {
 
     const { user, logout } = useAuth();
 
+    const router = useRouter();
+
+    const handleSearch = (e) => {
+        e.preventDefault();
+
+        if (!query.trim()) return;
+
+        // 🧩 Split input into discipline + optional location
+        const [disciplinePart, ...locationParts] = query.trim().split(" in ");
+        const discipline = disciplinePart.trim();
+        const location = locationParts.length > 0 ? locationParts.join(" ").trim() : "";
+
+        const params = new URLSearchParams();
+        if (discipline) params.set("discipline", discipline);
+        if (location) params.set("location", location);
+
+        // Redirect to /search with both params
+        router.push(`/search?${params.toString()}`);
+
+        setQuery("");
+        setMobileMenuOpen(false);
+    };
+
+    
     // Close user dropdown on outside click
     useEffect(() => {
         const handler = (e) => {
@@ -27,8 +53,8 @@ export default function Header() {
 
     const hasCustomAvatar =
         user?.avatar &&
-        user.avatar !== "/uploads/users/default-avatar.png" &&
-        user.avatar !== "default-avatar.png";
+        user.avatar !== "/images/avatar.webp" &&
+        user.avatar !== "/images/avatar.webp";
 
     const avatarSrc = hasCustomAvatar
         ? `${process.env.NEXT_PUBLIC_API_URL.replace("/api", "")}${user.avatar}`
@@ -56,25 +82,17 @@ export default function Header() {
                 {/* Center (Desktop only): Discover + Search */}
                 <div className="hidden lg:flex flex-1 items-center justify-center gap-4 px-6">
                     <Link
-                        href="/discover"
+                        href="/programs"
                         className="flex items-center gap-2 text-gray-800 hover:text-blue-700"
                     >
                         <Rocket className="h-5 w-5 text-blue-800" />
                         <span className="font-medium">Discover</span>
                     </Link>
 
-                    <div className="flex w-full max-w-md items-center rounded-md bg-gray-100 focus-within:ring-2 focus-within:ring-blue-500">
-                        <input
-                            type="text"
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            placeholder="Search universities or programs..."
-                            className="w-full rounded-l-md bg-gray-100 px-4 py-2 text-sm text-gray-700 focus:outline-none"
-                        />
-                        <button className="rounded-r-md bg-red-500 p-2 hover:bg-red-600">
-                            <Search className="h-5 w-5 text-white" />
-                        </button>
+                    <div className="flex-1 flex justify-center">
+                        <HeaderSearchBox />
                     </div>
+
                 </div>
 
                 {/* Right (Desktop only) */}
@@ -161,18 +179,10 @@ export default function Header() {
                 <div className="lg:hidden border-t border-gray-100 bg-white shadow-md">
                     <div className="flex flex-col px-4 py-4 space-y-4">
                         {/* Search Bar */}
-                        <div className="flex w-full items-center rounded-md bg-gray-100 focus-within:ring-2 focus-within:ring-blue-500">
-                            <input
-                                type="text"
-                                value={query}
-                                onChange={(e) => setQuery(e.target.value)}
-                                placeholder="Search anything"
-                                className="w-full rounded-l-md bg-gray-100 px-4 py-2 text-sm text-gray-700 focus:outline-none"
-                            />
-                            <button className="rounded-r-md bg-red-500 p-2 hover:bg-red-600">
-                                <Search className="h-5 w-5 text-white" />
-                            </button>
+                        <div className="py-2">
+                            <HeaderSearchBox />
                         </div>
+
 
                         {/* Links */}
                         <Link

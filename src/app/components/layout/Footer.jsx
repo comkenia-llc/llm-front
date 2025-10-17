@@ -72,8 +72,8 @@ export default function Footer() {
                         <ul className="space-y-2 text-sm text-gray-200">
                             <li><Link href="/events" className="hover:text-red-400 transition">Events</Link></li>
                             <li><Link href="/blog" className="hover:text-red-400 transition">Blog</Link></li>
-                            <li><Link href="/podcast" className="hover:text-red-400 transition">Podcast</Link></li>
-                            <li><Link href="/invite" className="hover:text-red-400 transition">Invite a friend</Link></li>
+                            {/* <li><Link href="/podcast" className="hover:text-red-400 transition">Podcast</Link></li> */}
+                            {/* <li><Link href="/invite" className="hover:text-red-400 transition">Invite a friend</Link></li> */}
                         </ul>
                     </div>
                 </div>
