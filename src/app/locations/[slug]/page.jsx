@@ -66,6 +66,7 @@ export default async function LocationDetailPage({ params }) {
     const { slug } = await params;
     const base = process.env.NEXT_PUBLIC_API_URL || "https://back.universitiesforllm.com";
 
+    // 🏙️ Fetch location details
     const res = await fetch(`${base}/api/locations/slug/${slug}`, { cache: "no-store" });
     if (!res.ok) {
         return <div className="text-center py-20 text-gray-500">Location not found.</div>;
@@ -76,6 +77,14 @@ export default async function LocationDetailPage({ params }) {
     const children = data.children || [];
     const universities = data.universities || [];
     const programs = data.programs || [];
+
+    // 🧩 Fetch FAQs for this location
+    const faqRes = await fetch(
+        `${base}/api/faqs?relatedType=location&relatedId=${location.id}`,
+        { cache: "no-store" }
+    );
+    const faqData = faqRes.ok ? await faqRes.json() : [];
+    const faqs = faqData.items || faqData || [];
 
     // ✅ Determine best image fallback
     const coverImage = location.image
@@ -181,6 +190,31 @@ export default async function LocationDetailPage({ params }) {
                 </section>
             )}
 
+            {/* === FAQs Section === */}
+            {faqs.length > 0 && (
+                <section className="mt-10">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center sm:text-left">
+                        FAQs about Studying in {location.city || location.state || location.country}
+                    </h2>
+
+                    <div className="divide-y divide-gray-200 bg-gray-50 rounded-lg border">
+                        {faqs.map((faq, idx) => (
+                            <details key={idx} className="group p-4">
+                                <summary className="flex justify-between items-center cursor-pointer text-lg font-semibold text-gray-800">
+                                    <span>{faq.question}</span>
+                                    <span className="transition-transform group-open:rotate-180">
+                                        ▼
+                                    </span>
+                                </summary>
+                                <p className="mt-3 text-gray-700 leading-relaxed">
+                                    {faq.answer}
+                                </p>
+                            </details>
+                        ))}
+                    </div>
+                </section>
+            )}
+
             {/* === Empty State === */}
             {children.length === 0 && universities.length === 0 && programs.length === 0 && (
                 <div className="text-center text-gray-500 py-20">
@@ -194,22 +228,14 @@ export default async function LocationDetailPage({ params }) {
                 dangerouslySetInnerHTML={{
                     __html: JSON.stringify({
                         "@context": "https://schema.org",
-                        "@type": "Place",
-                        name: location.seoTitle || location.country || location.city,
-                        description: location.seoDescription || "",
-                        image: coverImage,
-                        url: location.canonicalUrl || `https://universitiesforllm.com/locations/${slug}`,
-                        geo: location.latitude
-                            ? {
-                                "@type": "GeoCoordinates",
-                                latitude: Number(location.latitude),
-                                longitude: Number(location.longitude),
-                            }
-                            : undefined,
-                        hasPart: children.map((child) => ({
-                            "@type": "Place",
-                            name: child.city || child.state || child.country,
-                            url: `https://universitiesforllm.com/locations/${child.slug}`,
+                        "@type": "FAQPage",
+                        mainEntity: faqs.map((faq) => ({
+                            "@type": "Question",
+                            name: faq.question,
+                            acceptedAnswer: {
+                                "@type": "Answer",
+                                text: faq.answer,
+                            },
                         })),
                     }),
                 }}

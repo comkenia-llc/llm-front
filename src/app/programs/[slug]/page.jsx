@@ -1,11 +1,51 @@
 import Image from "next/image";
 import { GraduationCap, Clock, DollarSign, Globe, BookOpen, MapPin, School, FileText } from "lucide-react";
 import Link from "next/link";
+import FaqSection from "@/app/components/FaqSection";
 
 export const revalidate = 0; // Always fetch fresh data
 
+// ✅ 1. SEO Metadata
+export async function generateMetadata({ params }) {
+    const base = process.env.NEXT_PUBLIC_API_URL || "https://back.universitiesforllm.com";
+    const site = "https://universitiesforllm.com";
+    const { slug } = params;
+
+    try {
+        const res = await fetch(`${base}/api/programs/slug/${slug}`, { cache: "no-store" });
+        if (!res.ok) throw new Error("Program not found");
+
+        const program = await res.json();
+        const title =
+            program.seoTitle ||
+            `${program.title} from ${program.university?.name || "Top University"} | Keekan Education`;
+        const description =
+            program.seoDescription ||
+            `Explore details about ${program.title} offered by ${program.university?.name
+            }. Learn about tuition, eligibility, scholarships, and admission deadlines.`;
+        const image =
+            program.metaImage || program.featuredImage
+                ? `${base}${program.metaImage || program.featuredImage}`
+                : `${site}/program3.jpg`;
+        const canonical = program.canonicalUrl || `${site}/programs/${program.slug}`;
+
+        return {
+            title,
+            description,
+            alternates: { canonical },
+            openGraph: { title, description, images: [image], url: canonical },
+            twitter: { card: "summary_large_image", title, description, images: [image] },
+        };
+    } catch {
+        return { title: "Program Not Found | Keekan Education" };
+    }
+}
+
+
+
 export default async function ProgramDetailPage({ params }) {
-    const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+    const base = process.env.NEXT_PUBLIC_API_URL || "https://back.universitiesforllm.com";
+    const site = "https://universitiesforllm.com";
 
     // ✅ Fetch the program by slug
     const res = await fetch(`${base}/api/programs/slug/${params.slug}`, {
@@ -25,12 +65,14 @@ export default async function ProgramDetailPage({ params }) {
     const loc = program.location || {};
     const discipline = program.discipline || {};
 
-    // ✅ Helpers
-    const formatCurrency = (amount, currency = "USD") =>
-        amount ? `${currency} ${Number(amount).toLocaleString()}` : "N/A";
 
-    const formatDate = (date) =>
-        date ? new Date(date).toLocaleDateString("en-US", { month: "long", year: "numeric" }) : "N/A";
+    // 🎯 Fetch FAQs
+    const faqRes = await fetch(
+        `${base}/api/faqs?relatedType=program&relatedId=${program.id}`,
+        { cache: "no-store" }
+    );
+    const faqData = faqRes.ok ? await faqRes.json() : [];
+    const faqs = faqData.items || faqData || [];
 
     const imageUrl = program.featuredImage
         ? `${base}${program.featuredImage}`
@@ -38,6 +80,16 @@ export default async function ProgramDetailPage({ params }) {
 
     const uniLogo = uni.logo ? `${base}${uni.logo}` : "/images/uni1.png";
 
+
+
+    // ✅ Helpers
+    const formatCurrency = (amount, currency = "USD") =>
+        amount ? `${currency} ${Number(amount).toLocaleString()}` : "N/A";
+
+    const formatDate = (date) =>
+        date ? new Date(date).toLocaleDateString("en-US", { month: "long", year: "numeric" }) : "N/A";
+
+    
     return (
         <div className="max-w-6xl mx-auto px-4 py-10">
             {/* ===== Hero Section ===== */}
@@ -157,6 +209,8 @@ export default async function ProgramDetailPage({ params }) {
                     <p><strong>Status:</strong> {program.status}</p>
                 </div>
             </section>
+
+
             {/* ===== Relevant Scholarships ===== */}
             {program.relatedScholarships?.length > 0 && (
                 <section className="mt-12 bg-white rounded-2xl shadow-sm border p-6">
@@ -235,6 +289,88 @@ export default async function ProgramDetailPage({ params }) {
                 </section>
             )}
 
+
+            {/* ===== FAQs ===== */}
+            {/* {faqs.length > 0 && (
+                <section className="mt-12 bg-white rounded-2xl shadow-sm border p-6">
+                    <h3 className="text-2xl font-semibold text-gray-900 mb-6">
+                        FAQs about {program.title}
+                    </h3>
+                    <div className="divide-y divide-gray-200 bg-white rounded-lg border">
+                        {faqs.map((faq, i) => (
+                            <details key={i} className="group p-4">
+                                <summary className="flex justify-between items-center cursor-pointer text-lg font-semibold text-gray-800">
+                                    <span>{faq.question}</span>
+                                    <span className="transition-transform group-open:rotate-180">▼</span>
+                                </summary>
+                                <p className="mt-3 text-gray-700 leading-relaxed">{faq.answer}</p>
+                            </details>
+                        ))}
+                    </div>
+                </section>
+            )}
+
+            {faqs.length === 0 && (
+                <p className="text-center text-gray-500 py-10">
+                    No FAQs available for this program yet.
+                </p>
+            )} */}
+
+            <FaqSection
+                title={`Faq Section about ${program.title}`}
+                faqs={faqs}
+            />
+            {/* ===== JSON-LD Rich Schema ===== */}
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{
+                    __html: JSON.stringify({
+                        "@context": "https://schema.org",
+                        "@type": "EducationalOccupationalProgram",
+                        name: program.title,
+                        description: program.description || program.seoDescription || "",
+                        educationalCredentialAwarded: program.level || "Master's Degree",
+                        hasCourse: {
+                            "@type": "Course",
+                            name: program.title,
+                            provider: {
+                                "@type": "CollegeOrUniversity",
+                                name: uni.name || "",
+                                url: uni.website || "",
+                            },
+                        },
+                        timeToComplete: program.duration || "Varies",
+                        occupationalCategory: discipline?.name || "Law",
+                        provider: {
+                            "@type": "CollegeOrUniversity",
+                            name: uni.name || "",
+                            sameAs: uni.website || undefined,
+                        },
+                        programPrerequisites: program.requirements
+                            ? program.requirements.split("\n").filter(Boolean)
+                            : [],
+                    }),
+                }}
+            />
+
+            {/* FAQ Rich Result */}
+            {faqs.length > 0 && (
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{
+                        __html: JSON.stringify({
+                            "@context": "https://schema.org",
+                            "@type": "FAQPage",
+                            mainEntity: faqs.map((f) => ({
+                                "@type": "Question",
+                                name: f.question,
+                                acceptedAnswer: { "@type": "Answer", text: f.answer },
+                            })),
+                        }),
+                    }}
+                />
+            )}
+            
         </div>
     );
 }

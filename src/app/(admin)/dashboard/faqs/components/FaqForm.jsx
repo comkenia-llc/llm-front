@@ -17,14 +17,16 @@ export default function FaqForm({ editing, onClose, onSaved }) {
 
     const [loading, setLoading] = useState(false);
 
-    // location hierarchy
+    // Location hierarchy
     const [countries, setCountries] = useState([]);
     const [states, setStates] = useState([]);
     const [cities, setCities] = useState([]);
 
-    // other entity lists
+    // Entity lists
     const [universities, setUniversities] = useState([]);
     const [programs, setPrograms] = useState([]);
+    const [scholarships, setScholarships] = useState([]);
+    const [disciplines, setDisciplines] = useState([]);
 
     // ✅ Fetch countries initially
     useEffect(() => {
@@ -52,35 +54,52 @@ export default function FaqForm({ editing, onClose, onSaved }) {
         setCities(res.data.items || []);
     };
 
-    // ✅ When city selected
+    // ✅ City select
     const handleCitySelect = (cityId) => {
         setForm({ ...form, relatedId: cityId });
     };
 
-    // ✅ Fetch universities/programs depending on relatedType
+    // ✅ Fetch other entities dynamically
     useEffect(() => {
-        if (form.relatedType === "university") {
-            axiosClient.get("/api/universities?limit=200").then((res) => {
-                setUniversities(res.data.items || res.data);
-            });
-        } else if (form.relatedType === "program") {
-            axiosClient.get("/api/programs?limit=200").then((res) => {
-                setPrograms(res.data.items || res.data);
-            });
-        }
+        const fetchEntities = async () => {
+            try {
+                if (form.relatedType === "university") {
+                    const res = await axiosClient.get("/api/universities?limit=300");
+                    setUniversities(res.data.items || res.data);
+                } else if (form.relatedType === "program") {
+                    const res = await axiosClient.get("/api/programs?limit=300");
+                    setPrograms(res.data.items || res.data);
+                } else if (form.relatedType === "scholarship") {
+                    const res = await axiosClient.get("/api/scholarships?limit=300");
+                    setScholarships(res.data.items || res.data);
+                } else if (form.relatedType === "discipline") {
+                    const res = await axiosClient.get("/api/disciplines?limit=300");
+                    setDisciplines(res.data.items || res.data);
+                }
+            } catch (err) {
+                console.error("⚠️ Error fetching related data:", err);
+            }
+        };
+
+        fetchEntities();
     }, [form.relatedType]);
 
+    // ✅ Handle input changes
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         setForm({ ...form, [name]: type === "checkbox" ? checked : value });
     };
 
+    // ✅ Save
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         try {
-            if (editing) await axiosClient.put(`/api/faqs/${editing.id}`, form);
-            else await axiosClient.post("/api/faqs", form);
+            if (editing) {
+                await axiosClient.put(`/api/faqs/${editing.id}`, form);
+            } else {
+                await axiosClient.post("/api/faqs", form);
+            }
             onSaved();
             onClose();
         } catch (err) {
@@ -100,24 +119,29 @@ export default function FaqForm({ editing, onClose, onSaved }) {
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {/* Related Type */}
-                    <select
-                        name="relatedType"
-                        value={form.relatedType}
-                        onChange={(e) => {
-                            setForm({ ...form, relatedType: e.target.value, relatedId: "" });
-                            setCountries([]);
-                            setStates([]);
-                            setCities([]);
-                        }}
-                        className="w-full border p-2 rounded"
-                        required
-                    >
-                        <option value="location">Location</option>
-                        <option value="university">University</option>
-                        <option value="program">Program</option>
-                    </select>
+                    <div>
+                        <label className="block font-medium mb-1">Attach FAQ To:</label>
+                        <select
+                            name="relatedType"
+                            value={form.relatedType}
+                            onChange={(e) => {
+                                setForm({ ...form, relatedType: e.target.value, relatedId: "" });
+                                setCountries([]);
+                                setStates([]);
+                                setCities([]);
+                            }}
+                            className="w-full border p-2 rounded"
+                            required
+                        >
+                            <option value="location">🌍 Location</option>
+                            <option value="university">🏫 University</option>
+                            <option value="program">🎓 Program</option>
+                            <option value="scholarship">💰 Scholarship</option>
+                            <option value="discipline">📚 Discipline</option>
+                        </select>
+                    </div>
 
-                    {/* Related Selection */}
+                    {/* Dynamic Related Entity Selector */}
                     {form.relatedType === "location" && (
                         <div className="grid grid-cols-3 gap-3">
                             <select
@@ -194,6 +218,40 @@ export default function FaqForm({ editing, onClose, onSaved }) {
                         </select>
                     )}
 
+                    {form.relatedType === "scholarship" && (
+                        <select
+                            name="relatedId"
+                            value={form.relatedId}
+                            onChange={handleChange}
+                            className="w-full border p-2 rounded"
+                            required
+                        >
+                            <option value="">Select Scholarship</option>
+                            {scholarships.map((s) => (
+                                <option key={s.id} value={s.id}>
+                                    {s.title}
+                                </option>
+                            ))}
+                        </select>
+                    )}
+
+                    {form.relatedType === "discipline" && (
+                        <select
+                            name="relatedId"
+                            value={form.relatedId}
+                            onChange={handleChange}
+                            className="w-full border p-2 rounded"
+                            required
+                        >
+                            <option value="">Select Discipline</option>
+                            {disciplines.map((d) => (
+                                <option key={d.id} value={d.id}>
+                                    {d.name}
+                                </option>
+                            ))}
+                        </select>
+                    )}
+
                     {/* Question */}
                     <input
                         type="text"
@@ -215,6 +273,7 @@ export default function FaqForm({ editing, onClose, onSaved }) {
                         required
                     />
 
+                    {/* Status + Featured */}
                     <div className="flex items-center justify-between">
                         <label className="flex items-center gap-2">
                             <input
@@ -238,6 +297,7 @@ export default function FaqForm({ editing, onClose, onSaved }) {
                         </select>
                     </div>
 
+                    {/* Actions */}
                     <div className="flex justify-end gap-3 mt-6">
                         <button
                             type="button"

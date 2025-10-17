@@ -4,16 +4,14 @@ import { Heart, MapPin, Clock, DollarSign } from "lucide-react";
 import Link from "next/link";
 
 export default function ProgrammeCard({ programme, university, onFavorite, isActive }) {
-    const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+    const base = process.env.NEXT_PUBLIC_API_URL || "https://back.universitiesforllm.com";
 
-    // ✅ Resolve image URLs and fallbacks
+    // ✅ Precompute image URLs and placeholders
     const featuredImage = programme.featuredImage
         ? `${base}${programme.featuredImage}`
         : "/images/program3.jpg";
 
-    const uniLogo = university?.logo
-        ? `${base}${university.logo}`
-        : "/images/uni1.png";
+    const uniLogo = university?.logo ? `${base}${university.logo}` : "/images/uni1.png";
 
     const tuition =
         programme.tuitionFee && !isNaN(Number(programme.tuitionFee))
@@ -23,35 +21,36 @@ export default function ProgrammeCard({ programme, university, onFavorite, isAct
     return (
         <div
             className={`relative flex flex-col justify-between rounded-2xl border bg-white shadow-sm hover:shadow-xl 
-      hover:-translate-y-1 transition-all duration-300 overflow-hidden 
-      ${isActive ? "ring-4 ring-blue-400/30 shadow-blue-200/40" : ""}`}
+        hover:-translate-y-1 transition-all duration-300 overflow-hidden 
+        ${isActive ? "ring-4 ring-blue-400/30 shadow-blue-200/40" : ""}`}
         >
-            <Link
-                href={`/programs/${programme.slug || programme.id}`}
-            >
-
-                {/* ✅ Program Thumbnail */}
-                <div className="relative h-44 sm:h-52 w-full">
+            <Link href={`/programs/${programme.slug || programme.id}`} prefetch={false}>
+                {/* ✅ Optimized Image Wrapper with fixed ratio */}
+                <div className="relative w-full aspect-[16/9] bg-gray-100">
                     <Image
                         src={featuredImage}
                         alt={programme.title}
                         fill
                         className="object-cover"
-                        sizes="(max-width: 768px) 100vw, 33vw"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 400px"
+                        priority={isActive}
                     />
 
                     {/* ❤️ Favorite button */}
                     <button
-                        onClick={() => onFavorite?.(programme.id)}
+                        onClick={(e) => {
+                            e.preventDefault();
+                            onFavorite?.(programme.id);
+                        }}
                         className={`absolute top-3 right-3 rounded-full p-2 bg-white/80 backdrop-blur-sm transition-colors 
-          ${isActive ? "text-red-500" : "text-gray-600 hover:text-red-500"}`}
+              ${isActive ? "text-red-500" : "text-gray-600 hover:text-red-500"}`}
                     >
                         <Heart
-                            className={`h-5 w-5 ${isActive ? "fill-red-500 text-red-500" : "text-gray-500"}`}
+                            className={`h-5 w-5 ${isActive ? "fill-red-500 text-red-500" : "text-gray-500"
+                                }`}
                         />
                     </button>
 
-                    {/* ⭐ Featured tag */}
                     {programme.isFeatured && (
                         <span className="absolute bottom-2 left-2 bg-amber-100 text-amber-700 text-xs font-semibold px-2 py-0.5 rounded-md shadow-sm">
                             Featured
@@ -59,6 +58,7 @@ export default function ProgrammeCard({ programme, university, onFavorite, isAct
                     )}
                 </div>
             </Link>
+
             {/* ✅ Program Details */}
             <div className="p-5 flex flex-col gap-3">
                 <h3 className="font-semibold text-gray-900 text-lg leading-snug line-clamp-2">
@@ -84,7 +84,6 @@ export default function ProgrammeCard({ programme, university, onFavorite, isAct
                     )}
                 </div>
 
-                {/* Tuition & Duration */}
                 <div className="flex items-center justify-between text-sm text-gray-600 mt-2">
                     <div className="flex items-center gap-1">
                         <Clock size={15} className="text-blue-500" />
@@ -109,16 +108,26 @@ export default function ProgrammeCard({ programme, university, onFavorite, isAct
                             />
                         </div>
                         <div className="flex flex-col text-sm">
-                            <span className="font-medium text-gray-800">{university.name}</span>
-                            {programme.location && (
-                                <div className="flex items-center text-gray-500 gap-1">
+                            {/* ✅ University name clickable */}
+                            <Link
+                                href={`/universities/${university.slug || university.id}`}
+                                className="font-medium text-gray-800 hover:text-blue-700 transition-colors"
+                            >
+                                {university.name}
+                            </Link>
+
+                            {/* ✅ Location clickable */}
+                            {university?.location && (
+                                <Link
+                                    href={`/locations/${university.location.slug || ""}`}
+                                    className="flex items-center text-gray-500 gap-1 hover:text-blue-600 transition-colors"
+                                >
                                     <MapPin className="h-3.5 w-3.5" />
                                     <span>
-                                        {programme.location.city}, {programme.location.country}
+                                        {university.location.city || ""} {university.location.country || ""}
                                     </span>
-                                </div>
+                                </Link>
                             )}
-
                         </div>
                     </div>
                 )}
