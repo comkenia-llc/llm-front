@@ -24,69 +24,113 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
     });
 
     const [countries, setCountries] = useState([]);
+    const [states, setStates] = useState([]);
     const [loading, setLoading] = useState(false);
     const [showSEO, setShowSEO] = useState(false);
 
-    // ✅ Preview URLs for uploads
     const [previews, setPreviews] = useState({
         flag: null,
         image: null,
         metaImage: null,
     });
 
-    // 🧠 Prefill form when editing
+    // ✅ Load all countries on mount
+    useEffect(() => {
+        axiosClient.get("/api/locations?type=country&limit=500").then((res) => {
+            setCountries(res.data.items || res.data || []);
+        });
+    }, []);
+
+    // ✅ Prefill edit data
     useEffect(() => {
         if (editing) {
-            setForm({
-                country: editing.country || "",
-                countryCode: editing.countryCode || "",
-                state: editing.state || "",
-                city: editing.city || "",
-                type: editing.type || "country",
-                parentId: editing.parentId || null,
-                flag: null, // handled separately below
+            const faqString =
+                typeof editing.faqSchema === "object"
+                    ? JSON.stringify(editing.faqSchema, null, 2)
+                    : editing.faqSchema || "";
+
+            setForm((f) => ({
+                ...f,
+                ...editing,
+                faqSchema: faqString,
+                tags: Array.isArray(editing.tags)
+                    ? editing.tags.join(", ")
+                    : editing.tags || "",
+                flag: null,
                 image: null,
                 metaImage: null,
-                seoTitle: editing.seoTitle || "",
-                seoDescription: editing.seoDescription || "",
-                seoKeywords: editing.seoKeywords || "",
-                canonicalUrl: editing.canonicalUrl || "",
-                schemaType: editing.schemaType || "Place",
-                faqSchema: JSON.stringify(editing.faqSchema || "", null, 2),
-                tags: Array.isArray(editing.tags) ? editing.tags.join(", ") : (editing.tags || ""),
-                isFeatured: editing.isFeatured || false,
-            });
+            }));
 
             setPreviews({
                 flag: editing.flag ? `${process.env.NEXT_PUBLIC_API_URL}${editing.flag}` : null,
                 image: editing.image ? `${process.env.NEXT_PUBLIC_API_URL}${editing.image}` : null,
-                metaImage: editing.metaImage ? `${process.env.NEXT_PUBLIC_API_URL}${editing.metaImage}` : null,
+                metaImage: editing.metaImage
+                    ? `${process.env.NEXT_PUBLIC_API_URL}${editing.metaImage}`
+                    : null,
             });
+
+            // 🧠 If editing a state/city, fetch parent chain
+            if (editing.type === "state" && editing.parentId) {
+                setForm((f) => ({ ...f, parentId: editing.parentId }));
+            } else if (editing.type === "city" && editing.parentId) {
+                // Find state's parent country
+                axiosClient.get(`/api/locations/${editing.parentId}`).then(async (res) => {
+                    const stateData = res.data;
+                    if (stateData && stateData.parentId) {
+                        const countryId = stateData.parentId;
+                        // Fetch states for that country
+                        const statesRes = await axiosClient.get(
+                            `/api/locations?type=state&parentId=${countryId}`
+                        );
+                        setStates(statesRes.data.items || []);
+                        // Assign both parent levels
+                        setForm((f) => ({
+                            ...f,
+                            parentId: editing.parentId, // state
+                            countryId,
+                        }));
+                    }
+                });
+            }
 
             if (editing.seoTitle || editing.seoDescription) setShowSEO(true);
         }
     }, [editing]);
 
-    // 🧠 Fetch all countries for parent dropdown
-    useEffect(() => {
-        axiosClient.get("/api/locations?type=country").then((res) => {
-            setCountries(res.data.items || res.data || []);
-        });
-    }, []);
+    // ✅ When country changes → fetch states
+    const handleCountrySelect = async (countryId) => {
+        setStates([]);
+        if (countryId) {
+            const res = await axiosClient.get(`/api/locations?type=state&parentId=${countryId}`);
+            setStates(res.data.items || []);
+        }
+        // For state type → countryId is parentId
+        if (form.type === "state") {
+            setForm((f) => ({ ...f, parentId: countryId }));
+        } else {
+            // For city → we store selected country separately
+            setForm((f) => ({ ...f, countryId }));
+        }
+    };
 
+    // ✅ When selecting state for city
+    const handleStateSelect = (stateId) => {
+        setForm((f) => ({ ...f, parentId: stateId }));
+    };
+
+    // ✅ Field updates
     const handleChange = (e) => {
         const { name, value, files, type, checked } = e.target;
         const val = files ? files[0] : type === "checkbox" ? checked : value;
-
         setForm({ ...form, [name]: val });
 
-        // 🔄 Live preview for image uploads
         if (files && files[0]) {
             const url = URL.createObjectURL(files[0]);
             setPreviews((prev) => ({ ...prev, [name]: url }));
         }
     };
 
+    // ✅ Submit
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -94,7 +138,7 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
             try {
                 JSON.parse(form.faqSchema);
             } catch {
-                alert("❌ Invalid JSON format in FAQ Schema. Please fix it before saving.");
+                alert("❌ Invalid JSON in FAQ Schema.");
                 return;
             }
         }
@@ -108,10 +152,7 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
             });
 
             if (form.tags && typeof form.tags === "string") {
-                const tagsArray = form.tags
-                    .split(",")
-                    .map((t) => t.trim())
-                    .filter(Boolean);
+                const tagsArray = form.tags.split(",").map((t) => t.trim()).filter(Boolean);
                 fd.set("tags", JSON.stringify(tagsArray));
             }
 
@@ -120,7 +161,7 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
                     const parsed = JSON.parse(form.faqSchema);
                     fd.set("faqSchema", JSON.stringify(parsed));
                 } catch {
-                    console.warn("Invalid JSON for faqSchema — skipping");
+                    console.warn("Invalid FAQ Schema JSON — skipping");
                 }
             }
 
@@ -135,8 +176,9 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
             }
 
             onSaved();
+            onClose();
         } catch (err) {
-            console.error("Save error:", err);
+            console.error("❌ Save error:", err);
             alert("Error saving location");
         } finally {
             setLoading(false);
@@ -147,7 +189,11 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
             <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg overflow-y-auto max-h-[90vh]">
                 <h2 className="text-xl font-semibold mb-4">
-                    {editing ? "Edit Location" : parent ? `Add child under ${parent.country || parent.city}` : "Add Location"}
+                    {editing
+                        ? `Edit ${editing.type.charAt(0).toUpperCase() + editing.type.slice(1)}`
+                        : parent
+                            ? `Add child under ${parent.country || parent.city}`
+                            : "Add Location"}
                 </h2>
 
                 <form onSubmit={handleSubmit} className="space-y-3">
@@ -166,25 +212,44 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
                         </select>
                     )}
 
-                    {/* Parent dropdown */}
+                    {/* === Hierarchy Dropdowns === */}
                     {form.type !== "country" && (
-                        <select
-                            name="parentId"
-                            value={form.parentId || ""}
-                            onChange={handleChange}
-                            className="w-full border p-2 rounded"
-                        >
-                            <option value="">Select Country</option>
-                            {countries.map((c) => (
-                                <option key={c.id} value={c.id}>
-                                    {c.country}
-                                </option>
-                            ))}
-                        </select>
+                        <div className="grid grid-cols-2 gap-2">
+                            {/* Select Country */}
+                            <select
+                                onChange={(e) => handleCountrySelect(e.target.value)}
+                                value={form.countryId || ""}
+                                className="border p-2 rounded"
+                            >
+                                <option value="">Select Country</option>
+                                {countries.map((c) => (
+                                    <option key={c.id} value={c.id}>
+                                        {c.country}
+                                    </option>
+                                ))}
+                            </select>
+
+                            {/* Select State (for city / neighborhood) */}
+                            {(form.type === "city" || form.type === "neighborhood") && (
+                                <select
+                                    onChange={(e) => handleStateSelect(e.target.value)}
+                                    value={form.parentId || ""}
+                                    className="border p-2 rounded"
+                                    disabled={!states.length}
+                                >
+                                    <option value="">Select State</option>
+                                    {states.map((s) => (
+                                        <option key={s.id} value={s.id}>
+                                            {s.state}
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
+                        </div>
                     )}
 
-                    {/* Country / City / State input */}
-                    {form.type === "country" ? (
+                    {/* === Name Inputs === */}
+                    {form.type === "country" && (
                         <>
                             <input
                                 name="country"
@@ -202,11 +267,22 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
                                 className="w-full border p-2 rounded"
                             />
                         </>
-                    ) : (
+                    )}
+                    {form.type === "state" && (
                         <input
-                            name={form.type}
-                            placeholder={`${form.type.charAt(0).toUpperCase() + form.type.slice(1)} Name`}
-                            value={form[form.type] || ""}
+                            name="state"
+                            placeholder="State / Province Name"
+                            value={form.state}
+                            onChange={handleChange}
+                            className="w-full border p-2 rounded"
+                            required
+                        />
+                    )}
+                    {form.type === "city" && (
+                        <input
+                            name="city"
+                            placeholder="City Name"
+                            value={form.city}
                             onChange={handleChange}
                             className="w-full border p-2 rounded"
                             required
@@ -224,15 +300,13 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
                             className="h-4 w-4"
                         />
                         <label htmlFor="isFeatured" className="text-sm text-gray-700">
-                            Mark as Featured Location (show on homepage)
+                            Mark as Featured
                         </label>
                     </div>
 
                     {/* 🏳 Flag Image */}
-                    <div className="mt-4">
-                        <label className="block text-sm font-medium text-gray-700">
-                            Country/Region Flag (small icon)
-                        </label>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Flag</label>
                         <input
                             type="file"
                             name="flag"
@@ -243,17 +317,15 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
                         {previews.flag && (
                             <img
                                 src={previews.flag}
-                                alt="Flag preview"
+                                alt="Flag"
                                 className="mt-2 w-16 h-10 object-cover border rounded"
                             />
                         )}
                     </div>
 
-                    {/* 🏙 Main Location Image */}
+                    {/* 🏙 Main Image */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                            Main Image (used on public cards)
-                        </label>
+                        <label className="block text-sm font-medium text-gray-700">Main Image</label>
                         <input
                             type="file"
                             name="image"
@@ -270,11 +342,9 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
                         )}
                     </div>
 
-                    {/* 🌐 SEO Meta Image */}
+                    {/* 🌐 Meta Image */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                            SEO / Meta Image (used for Open Graph & social sharing)
-                        </label>
+                        <label className="block text-sm font-medium text-gray-700">Meta Image</label>
                         <input
                             type="file"
                             name="metaImage"
@@ -291,14 +361,14 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
                         )}
                     </div>
 
-                    {/* 🧠 SEO Section */}
+                    {/* SEO */}
                     <div className="border-t pt-3 mt-3">
                         <button
                             type="button"
                             onClick={() => setShowSEO(!showSEO)}
                             className="text-blue-600 text-sm font-semibold"
                         >
-                            {showSEO ? "Hide SEO & Rich Results ▲" : "Show SEO & Rich Results ▼"}
+                            {showSEO ? "Hide SEO ▲" : "Show SEO ▼"}
                         </button>
                     </div>
 
@@ -320,43 +390,24 @@ export default function LocationForm({ editing, parent, onClose, onSaved }) {
                             />
                             <input
                                 name="seoKeywords"
-                                placeholder="SEO Keywords (comma-separated)"
+                                placeholder="SEO Keywords"
                                 value={form.seoKeywords}
                                 onChange={handleChange}
                                 className="w-full border p-2 rounded"
                             />
                             <input
                                 name="canonicalUrl"
-                                placeholder="Canonical URL (optional)"
+                                placeholder="Canonical URL"
                                 value={form.canonicalUrl}
                                 onChange={handleChange}
                                 className="w-full border p-2 rounded"
                             />
-                            <h4 className="font-medium mt-3 text-gray-700">Structured Data (JSON-LD)</h4>
-                            <select
-                                name="schemaType"
-                                value={form.schemaType}
-                                onChange={handleChange}
-                                className="w-full border p-2 rounded"
-                            >
-                                <option value="Place">Place</option>
-                                <option value="EducationalOrganization">EducationalOrganization</option>
-                                <option value="City">City</option>
-                                <option value="Country">Country</option>
-                            </select>
                             <textarea
                                 name="faqSchema"
-                                placeholder='FAQ Schema (JSON format, e.g. [{"question": "...", "answer": "..."}])'
+                                placeholder='FAQ Schema JSON [{"question":"...","answer":"..."}]'
                                 value={form.faqSchema}
                                 onChange={handleChange}
-                                className="w-full border p-2 rounded min-h-[100px] font-mono text-sm"
-                            />
-                            <input
-                                name="tags"
-                                placeholder="Tags (comma-separated)"
-                                value={form.tags}
-                                onChange={handleChange}
-                                className="w-full border p-2 rounded"
+                                className="w-full border p-2 rounded font-mono text-sm min-h-[100px]"
                             />
                         </div>
                     )}

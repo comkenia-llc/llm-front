@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { Building, GraduationCap, Map, Award, LayoutDashboard, BadgeDollarSign, FileText, BookOpen, Newspaper } from "lucide-react";
+import { Building, GraduationCap, Map, Award, LayoutDashboard, BadgeDollarSign, FileText, BookOpen, Newspaper, FileQuestion } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 
@@ -13,6 +13,7 @@ const navItems = [
     { href: "/dashboard/articles", label: "Articles", icon: FileText },
     { href: "/dashboard/disciplines", label: "Discplines", icon: BookOpen },
     { href: "/dashboard/news", label: "News", icon: Newspaper },
+    { href: "/dashboard/faqs", label: "Faqs", icon: FileQuestion },
 ];
 
 export default function AdminSidebar() {
