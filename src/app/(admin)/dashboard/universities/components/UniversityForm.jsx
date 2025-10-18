@@ -244,10 +244,12 @@ export default function UniversityForm({ editing, onClose, onSaved }) {
                     />
 
                     {/* 📝 Description */}
-                    <TextEditor
-                        label="📝 About University"
-                        value={form.description}
-                        onChange={(html) => setForm({ ...form, description: html })}
+                    <textarea
+                        name="description"
+                        placeholder="Short description"
+                        value={form.description || ""}
+                        onChange={handleChange}
+                        className="w-full border p-2 rounded min-h-[100px]"
                     />
 
                     {/* 🖼 Logo + Banner + Meta Image */}
@@ -371,5 +373,4 @@ export default function UniversityForm({ editing, onClose, onSaved }) {
     );
 }
 
-import { Fragment } from "react";import TextEditor from "@/app/components/TextEditor";
-
+import { Fragment } from "react";

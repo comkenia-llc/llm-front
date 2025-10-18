@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { GraduationCap, Award, FileText } from "lucide-react";
-import DOMPurify from "isomorphic-dompurify";
+
 
 export default function UniversityAbout({ uni }) {
     const [cleanHtml, setCleanHtml] = useState("");
