@@ -126,22 +126,28 @@ export default function UniversityCard({ university = {}, isActive, onFavorite }
                     </h3>
                     <div className="flex items-center justify-center gap-1 text-sm text-gray-500 mt-1">
                         <MapPin className="h-4 w-4" />
-                        <span>
-                            {university.locationText ||
-                                (location?.city
-                                    ? `${location.city}${location.state ? `, ${location.state}` : ""}${location.country ? `, ${location.country}` : ""}`
-                                    : location?.country || "Location unavailable")}
+                        <span className="flex items-center gap-1">
+                            {location
+                                ? [
+                                    location.city,
+                                    location.state,
+                                    location.country
+                                ]
+                                    .filter(Boolean)
+                                    .join(", ")
+                                : "Location unavailable"}
+                            {location?.flag && (
+                                <Image
+                                    src={`${base}${location.flag}`}
+                                    alt="flag"
+                                    width={20}
+                                    height={15}
+                                    className="object-contain inline-block ml-1"
+                                />
+                            )}
                         </span>
-                        {location?.flag && (
-                            <Image
-                                src={`${base}${location.flag}`}
-                                alt="flag"
-                                width={20}
-                                height={15}
-                                className="object-contain"
-                            />
-                        )}
                     </div>
+
 
 
                 </div>
