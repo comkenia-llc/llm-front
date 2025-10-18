@@ -1,21 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { GraduationCap, Award, FileText } from "lucide-react";
-
+import { useEffect } from "react";
+import { GraduationCap, Users, BookOpen, Award, FileText } from "lucide-react";
 
 export default function UniversityAbout({ uni }) {
-    const [cleanHtml, setCleanHtml] = useState("");
-
+    // Log when component mounts
     useEffect(() => {
         console.log("🧩 UniversityAbout mounted");
+        console.log("📦 uni.about:", uni.about);
         console.log("📦 uni.description:", uni.description);
-
-        // Choose whichever is filled
-        const rawHtml = uni.about || uni.description || "";
-        // Sanitize once client-side only
-        const sanitized = DOMPurify.sanitize(rawHtml);
-        setCleanHtml(sanitized);
     }, [uni]);
 
     const stats = [
@@ -81,12 +74,13 @@ export default function UniversityAbout({ uni }) {
                     History & About
                 </h2>
 
-                {cleanHtml ? (
+                {uni.about || uni.description ? (
                     <div
-                        className="prose prose-blue max-w-none text-gray-800"
-                        dangerouslySetInnerHTML={{ __html: uni.description }}
+                        className="prose prose-blue max-w-none text-gray-800 prose-h2:text-gray-900 prose-strong:text-gray-900 prose-li:my-1"
+                        dangerouslySetInnerHTML={{
+                            __html: uni.about || uni.description,
+                        }}
                     />
-
                 ) : (
                     <p className="text-gray-500 text-center py-6">
                         No about section found.
