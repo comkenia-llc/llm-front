@@ -12,14 +12,14 @@ export default function Hero() {
             {/* Content */}
             <div className="relative z-10 max-w-4xl mx-auto text-white">
                 <h1
-                    className="text-2xl sm:text-3xl md:text-5xl font-extrabold leading-tight tracking-tight"
+                    className="text-lg sm:text-xl md:text-4xl font-extrabold leading-tight tracking-tight"
                     style={{ textShadow: "0 2px 6px rgba(0,0,0,0.2)" }}
                 >
                     PURSUE YOUR PASSION,{" "}
                     <span className="text-red-400">SHAPE YOUR FUTURE</span>
                 </h1>
 
-                <p className="mt-3 sm:mt-5 text-base sm:text-lg md:text-xl text-gray-100 font-light">
+                <p className="mt-3 sm:mt-5 text-xs sm:text-base md:text-lg text-gray-100 font-light">
                     Find Thousands of Universities, Programmes, and Much More
                 </p>
 

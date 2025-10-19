@@ -27,13 +27,13 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
-        <Script
+        {/* <Script
           id="adsense-loader"
           async
           strategy="afterInteractive"
           crossOrigin="anonymous"
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5793245153516336"
-        />
+        /> */}
 
         {/* ✅ Google Analytics (GA4) */}
         <Script

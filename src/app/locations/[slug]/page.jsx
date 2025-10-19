@@ -23,8 +23,7 @@ export async function generateMetadata({ params }) {
             `Top Universities and Programs in ${location.city || location.state || location.country}`;
         const description =
             location.seoDescription ||
-            `Explore top universities, programs, and scholarships in ${location.city || location.state || location.country
-            }. Find your perfect study destination today.`;
+            `Explore top universities, programs, and scholarships in ${location.city || location.state || location.country}. Find your perfect study destination today.`;
 
         const image = location.metaImage
             ? `${base}${location.metaImage}`
@@ -78,7 +77,7 @@ export default async function LocationDetailPage({ params }) {
     const universities = data.universities || [];
     const programs = data.programs || [];
 
-    // 🧩 Fetch FAQs for this location
+    // 🧩 Fetch FAQs (Server-Side)
     const faqRes = await fetch(
         `${base}/api/faqs?relatedType=location&relatedId=${location.id}`,
         { cache: "no-store" }
@@ -86,7 +85,24 @@ export default async function LocationDetailPage({ params }) {
     const faqData = faqRes.ok ? await faqRes.json() : [];
     const faqs = faqData.items || faqData || [];
 
-    // ✅ Determine best image fallback
+    // ✅ Build FAQ Schema (must be an object, not a string!)
+    const faqSchema =
+        faqs.length > 0
+            ? {
+                "@context": "https://schema.org",
+                "@type": "FAQPage",
+                mainEntity: faqs.map((faq) => ({
+                    "@type": "Question",
+                    name: faq.question,
+                    acceptedAnswer: {
+                        "@type": "Answer",
+                        text: faq.answer,
+                    },
+                })),
+            }
+            : null;
+
+    // ✅ Determine cover image
     const coverImage = location.image
         ? `${base}${location.image}`
         : location.metaImage
@@ -180,11 +196,7 @@ export default async function LocationDetailPage({ params }) {
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                         {programs.map((prog) => (
-                            <ProgrammeCard
-                                key={prog.id}
-                                programme={prog}
-                                university={prog.university}
-                            />
+                            <ProgrammeCard key={prog.id} programme={prog} university={prog.university} />
                         ))}
                     </div>
                 </section>
@@ -202,13 +214,9 @@ export default async function LocationDetailPage({ params }) {
                             <details key={idx} className="group p-4">
                                 <summary className="flex justify-between items-center cursor-pointer text-lg font-semibold text-gray-800">
                                     <span>{faq.question}</span>
-                                    <span className="transition-transform group-open:rotate-180">
-                                        ▼
-                                    </span>
+                                    <span className="transition-transform group-open:rotate-180">▼</span>
                                 </summary>
-                                <p className="mt-3 text-gray-700 leading-relaxed">
-                                    {faq.answer}
-                                </p>
+                                <p className="mt-3 text-gray-700 leading-relaxed">{faq.answer}</p>
                             </details>
                         ))}
                     </div>
@@ -222,24 +230,16 @@ export default async function LocationDetailPage({ params }) {
                 </div>
             )}
 
-            {/* === JSON-LD Rich Schema === */}
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{
-                    __html: JSON.stringify({
-                        "@context": "https://schema.org",
-                        "@type": "FAQPage",
-                        mainEntity: faqs.map((faq) => ({
-                            "@type": "Question",
-                            name: faq.question,
-                            acceptedAnswer: {
-                                "@type": "Answer",
-                                text: faq.answer,
-                            },
-                        })),
-                    }),
-                }}
-            ></script>
+            {/* === ✅ Correctly formatted JSON-LD (no escaped quotes) === */}
+            {faqSchema && (
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{
+                        // Only stringify once — do not double encode
+                        __html: JSON.stringify(faqSchema),
+                    }}
+                />
+            )}
         </div>
     );
 }

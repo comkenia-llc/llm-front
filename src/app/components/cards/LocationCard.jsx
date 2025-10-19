@@ -101,15 +101,19 @@ export default function LocationCard({ location, universityCount = 0, programCou
 
                     {/* === Stats Section === */}
                     <div className="mt-4 grid grid-cols-2 gap-3 w-full">
-                        <div className="flex items-center justify-center gap-1.5 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl py-2 text-gray-800 text-sm shadow-inner">
-                            <GraduationCap className="h-4 w-4 text-emerald-600" />
-                            <span>{universityCount} Universities</span>
+                        <div className="flex flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 rounded-xl py-3 shadow-inner text-gray-800">
+                            <GraduationCap className="h-5 w-5 text-emerald-600 mb-1" />
+                            <span className="text-lg font-semibold">{universityCount}</span>
+                            <span className="text-sm text-gray-600">Universities</span>
                         </div>
-                        <div className="flex items-center justify-center gap-1.5 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl py-2 text-gray-800 text-sm shadow-inner">
-                            <Globe2 className="h-4 w-4 text-blue-600" />
-                            <span>{programCount} Programs</span>
+
+                        <div className="flex flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 rounded-xl py-3 shadow-inner text-gray-800">
+                            <Globe2 className="h-5 w-5 text-blue-600 mb-1" />
+                            <span className="text-lg font-semibold">{programCount}</span>
+                            <span className="text-sm text-gray-600">Programs</span>
                         </div>
                     </div>
+
 
                     {/* Hover border glow */}
                     <div className="absolute inset-0 rounded-2xl ring-2 ring-transparent group-hover:ring-blue-500/20 transition-all"></div>

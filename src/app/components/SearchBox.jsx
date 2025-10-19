@@ -56,7 +56,7 @@ export default function SearchBox() {
                     <select
                         value={discipline}
                         onChange={(e) => setDiscipline(e.target.value)}
-                        className="w-full appearance-none rounded-md border border-gray-200 bg-white px-4 py-2.5 
+                        className="w-full text-xs sm:text-base appearance-none rounded-md border border-gray-200 bg-white px-4 py-2.5 
                         text-gray-700 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
                     >
                         <option value="">Search Study Programs</option>
@@ -90,7 +90,7 @@ export default function SearchBox() {
                     <select
                         value={location}
                         onChange={(e) => setLocation(e.target.value)}
-                        className="w-full appearance-none rounded-md border border-gray-200 bg-white px-4 py-2.5 
+                        className="w-full text-xs sm:text-base appearance-none rounded-md border border-gray-200 bg-white px-4 py-2.5 
                         text-gray-700 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
                     >
                         <option value="">Search Study Destinations</option>
@@ -121,7 +121,7 @@ export default function SearchBox() {
             {/* 🔍 Search Button */}
             <button
                 onClick={handleSearch}
-                className="w-full sm:w-auto bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 
+                className="w-full text-sm sm:text-base sm:w-auto bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 
                 text-white font-semibold rounded-md px-8 py-3 shadow-md hover:shadow-lg flex items-center justify-center gap-2 
                 transition-all duration-200"
             >

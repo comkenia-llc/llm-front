@@ -67,11 +67,12 @@ export default function FeaturedLocationsSection() {
                         <LocationCard
                             key={loc.id}
                             location={loc}
-                            universityCount={loc.universitiesCount || 0}
-                            programCount={loc.programsCount || 0}
+                            universityCount={loc.universityCount || 0}
+                            programCount={loc.programCount || 0}
                         />
                     ))}
                 </div>
+
 
                 {/* === Button === */}
                 <div className="flex justify-center mt-12">
