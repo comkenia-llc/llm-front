@@ -14,7 +14,7 @@ export default function FeaturedLocationsSection() {
     useEffect(() => {
         const fetchLocations = async () => {
             try {
-                const res = await axiosClient.get("/api/locations?isFeatured=true&limit=6");
+                const res = await axiosClient.get("/api/locations/featured?limit=6");
                 setLocations(res.data.items || res.data || []);
             } catch (err) {
                 console.error("❌ Failed to fetch featured locations:", err);

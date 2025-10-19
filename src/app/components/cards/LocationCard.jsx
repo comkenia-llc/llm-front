@@ -14,7 +14,7 @@ export default function LocationCard({ location, universityCount = 0, programCou
         "/images/default-location.webp";
 
     const flag =
-        (location.flag && `${base}${location.flag}`) || "/images/default-flag.png";
+        (location.flag && `${base}${location.flag}`) || "/images/default-flag.webp";
 
     // Continent color theme
     const continentColors = {
