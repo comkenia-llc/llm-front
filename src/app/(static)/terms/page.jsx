@@ -4,7 +4,7 @@ export const revalidate = false;
 import Image from "next/image";
 
 export const metadata = {
-    title: "Terms & Conditions | Universities for LLM",
+    title: "Terms & Conditions | Universities for LLM | Keekan Education Network",
     description:
         "Read the official Terms and Conditions of Universities for LLM — powered by Keekan Education — detailing user rights, content policies, and service guidelines.",
     alternates: { canonical: "https://universitiesforllm.com/terms" },

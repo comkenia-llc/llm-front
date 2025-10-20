@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 export const metadata = {
-    title: "Partnership Opportunities | Universities for LLM",
+    title: "Partnership Opportunities | Universities for LLM | Keekan Education Network",
     description:
         "Partner with Universities for LLM — powered by Keekan Education — to reach global law students and showcase your university programs worldwide.",
     alternates: { canonical: "https://universitiesforllm.com/partnership" },

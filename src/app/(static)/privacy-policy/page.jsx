@@ -4,7 +4,7 @@ export const revalidate = false;
 import Image from "next/image";
 
 export const metadata = {
-    title: "Privacy Policy | Universities for LLM",
+    title: "Privacy Policy | Universities for LLM | Keekan Education Network",
     description:
         "Read how Universities for LLM — powered by Keekan Education — collects, protects, and manages your personal information with full GDPR compliance.",
     alternates: { canonical: "https://universitiesforllm.com/privacy-policy" },

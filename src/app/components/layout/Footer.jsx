@@ -54,7 +54,7 @@ export default function Footer() {
                 </div>
 
                 {/* Links Wrapper */}
-                <div className="sm:col-span-2 px-4 grid grid-cols-2 gap-10 md:gap-16">
+                <div className="sm:col-span-2 px-4 grid grid-cols-2 sm:grid-cols-3 gap-10 md:gap-16">
                     {/* About Links */}
                     <div>
                         <h3 className="text-lg font-semibold mb-4">About</h3>
@@ -72,10 +72,22 @@ export default function Footer() {
                         <ul className="space-y-2 text-sm text-gray-200">
                             <li><Link href="/events" className="hover:text-red-400 transition">Events</Link></li>
                             <li><Link href="/blog" className="hover:text-red-400 transition">Blog</Link></li>
-                            {/* <li><Link href="/podcast" className="hover:text-red-400 transition">Podcast</Link></li> */}
+                            <li><Link href="/faqs" className="hover:text-red-400 transition">FAQ</Link></li>
                             {/* <li><Link href="/invite" className="hover:text-red-400 transition">Invite a friend</Link></li> */}
                         </ul>
                     </div>
+
+                    <div>
+                        <h3 className="text-lg font-semibold mb-4">Support</h3>
+                        <ul className="space-y-2 text-sm text-gray-200">
+                            <li><Link href="/about" className="hover:text-red-400 transition">About Us</Link></li>
+                            <li><Link href="/contact" className="hover:text-red-400 transition">Contact</Link></li>
+                            <li><Link href="/dmca" className="hover:text-red-400 transition">DMCA</Link></li>
+                            <li><Link href="/disclaimer" className="hover:text-red-400 transition">Disclaimer</Link></li>
+                            <li><Link href="/cookies" className="hover:text-red-400 transition">Cookies</Link></li>
+                        </ul>
+                    </div>
+
                 </div>
             </div>
 

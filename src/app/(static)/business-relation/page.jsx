@@ -6,12 +6,12 @@ import Image from "next/image";
 import Link from "next/link";
 
 export const metadata = {
-    title: "Business Relations | Universities for LLM",
+    title: "Business Relations | Universities for LLM | Keekan Education Network",
     description:
         "Explore business and partnership opportunities with Universities for LLM — powered by Keekan Education. Collaborate with global institutions and reach law students worldwide.",
     alternates: { canonical: "https://universitiesforllm.com/business-relation" },
     openGraph: {
-        title: "Business Relations | Universities for LLM",
+        title: "Business Relations | Universities for LLM | Keekan Education Netwrok",
         description:
             "Partner with Keekan Education to enhance your institution’s reach, analytics, and engagement with international law students.",
         images: [

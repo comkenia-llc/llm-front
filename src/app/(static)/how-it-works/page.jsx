@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 export const metadata = {
-    title: "How It Works | Universities for LLM",
+    title: "How It Works | Universities for LLM | Keekan Education Network",
     description:
         "Discover how Universities for LLM — powered by Keekan Education — connects students with top law universities and scholarships worldwide.",
     alternates: { canonical: "https://universitiesforllm.com/how-it-works" },
