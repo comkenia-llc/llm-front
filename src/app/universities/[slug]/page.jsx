@@ -14,10 +14,17 @@ export async function generateMetadata({ params }) {
         if (!res.ok) throw new Error("University not found");
 
         const uni = await res.json();
-        const title = uni.seoTitle || `${uni.name} – LLM Programs & Scholarships | Keekan Education`;
-        const description =
-            uni.seoDescription ||
-            `Discover ${uni.name}'s top LLM programs, scholarships, and admission requirements. Explore rankings, tuition, and more with Keekan Education.`;
+        // 🏫 SEO title & description with site name
+        const siteName = "Universities for LLM";
+
+        const title = uni.seoTitle
+            ? `${uni.seoTitle} | ${siteName}`
+            : `${uni.name} – LLM Admission Requirements, Scholarships & Rankings | ${siteName}`;
+
+        const description = uni.seoDescription
+            ? `${uni.seoDescription} | ${siteName}`
+            : `Explore ${uni.name}'s LLM programs, scholarships, tuition fees, and admission requirements. Learn more about top UK law universities on ${siteName}.`;
+
         const keywords =
             uni.seoKeywords ||
             "LLM, law universities, scholarships, study abroad, Keekan Education";
