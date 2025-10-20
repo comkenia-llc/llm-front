@@ -1,193 +1,133 @@
-import Image from "next/image";
 import Link from "next/link";
+import Image from "next/image";
 
-export const revalidate = 0; // always fetch fresh data (SSR)
-
-export async function generateMetadata() {
-    const site = "https://universitiesforllm.com";
-
-    return {
-        title: "Latest LLM Articles & News | Keekan Education",
+// ✅ SEO Metadata
+export const metadata = {
+    title: "Legal Education Blog | Universities for LLM | Keekan Education Network",
+    description:
+        "Read expert articles, guides, and insights about studying LLM abroad, scholarships, and legal education trends — powered by Keekan Education.",
+    alternates: { canonical: "https://universitiesforllm.com/blog" },
+    openGraph: {
+        title: "Universities for LLM Blog | Keekan Education",
         description:
-            "Read the latest LLM articles, law education news, and university insights powered by Keekan Education. Stay updated on scholarships, admissions, and top law programs worldwide.",
-        keywords:
-            "LLM articles, law university news, LLM scholarships, study law abroad, Keekan Education, universities for LLM",
-        alternates: { canonical: `${site}/articles` },
-        openGraph: {
-            type: "website",
-            url: `${site}/articles`,
-            title: "Latest LLM Articles & News | Keekan Education",
-            description:
-                "Explore global LLM insights, scholarships, and university guides curated by Keekan Education.",
-            siteName: "Universities for LLM",
-            images: [
-                {
-                    url: `${site}/og-articles.jpg`,
-                    width: 1200,
-                    height: 630,
-                    alt: "LLM Articles - Keekan Education",
-                },
-            ],
-        },
-        twitter: {
-            card: "summary_large_image",
-            title: "Latest LLM Articles | Keekan Education",
-            description:
-                "Explore the latest LLM law articles, scholarships, and university insights powered by Keekan Education.",
-            images: [`${site}/og-articles.jpg`],
-        },
-    };
-}
+            "Explore our latest blog posts and expert insights about international legal education, scholarships, and university updates.",
+        images: [
+            {
+                url: "/images/blog-og.jpg",
+                width: 1200,
+                height: 630,
+                alt: "LLM Blog - Universities for LLM",
+            },
+        ],
+    },
+};
 
-export default async function ArticlesPage({ searchParams: searchParamsPromise }) {
-    const searchParams = await searchParamsPromise;
+export default async function BlogPage() {
+    const base =
+        process.env.NEXT_PUBLIC_API_URL || "https://back.universitiesforllm.com";
 
-
-    // Pagination params
-    const page = parseInt(searchParams.page || "1");
-    const limit = 9;
-
-    const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-    const fixUrl = (path) => {
-        if (!path) return null;
-        if (path.startsWith("http")) return path;
-        return `${base}${path.startsWith("/") ? path : `/${path}`}`;
-    };
-
-    // ✅ Fetch all published articles from backend
-    const res = await fetch(`${base}/api/articles?page=${page}&limit=${limit}`, {
-        cache: "no-store",
-    });
-
-    if (!res.ok) {
-        console.error("❌ Failed to fetch articles:", res.statusText);
-        return (
-            <div className="flex justify-center items-center min-h-[60vh] text-gray-500">
-                Failed to load articles.
-            </div>
-        );
+    let articles = [];
+    try {
+        const res = await fetch(`${base}/api/articles?status=published&limit=9`, {
+            cache: "no-store",
+        });
+        const data = await res.json();
+        articles = data.items || data || [];
+    } catch (err) {
+        console.error("❌ Error fetching articles:", err);
     }
 
-    const data = await res.json();
-    const articles = data.items || data;
-    const total = data.total || 0;
-    const totalPages = Math.ceil(total / limit);
-
-    // ✅ Build Google JSON-LD (Blog + ItemList)
-    const jsonLd = {
-        "@context": "https://schema.org",
-        "@type": "Blog",
-        name: "LLM Articles by Keekan Education",
-        description:
-            "Explore the latest LLM articles, university insights, and law education updates.",
-        url: "https://universitiesforllm.com/articles",
-        blogPost: articles.map((a) => ({
-            "@type": "BlogPosting",
-            headline: a.seoTitle || a.title,
-            url: `https://universitiesforllm.com/article/${a.slug}`,
-            image: a.metaImage || a.image,
-            datePublished: a.createdAt,
-            dateModified: a.lastUpdated,
-            description: a.seoDescription || a.excerpt,
-            author: {
-                "@type": "Organization",
-                name: "Keekan Education",
-            },
-        })),
-    };
-
-    // ✅ Render UI
     return (
-        <section className="max-w-6xl mx-auto px-4 py-10">
-            <h1 className="text-3xl font-bold mb-8 text-gray-900 text-center">
-                Latest LLM Articles & News
-            </h1>
+        <main className="min-h-screen bg-gradient-to-b from-[#010b59] via-[#0a166e] to-[#0a1040] text-gray-100 relative overflow-hidden">
+            {/* 🌈 Gradient glow */}
+            <div className="absolute inset-0 bg-gradient-to-br from-[#f613a3]/30 via-transparent to-[#9deff9]/30 blur-3xl" />
 
-            {/* Articles Grid */}
-            {articles.length === 0 ? (
-                <div className="flex justify-center items-center min-h-[40vh] text-gray-500">
-                    No articles found.
+            {/* 📰 Hero Section */}
+            <section className="relative py-20 text-center">
+                <div className="relative z-10 max-w-3xl mx-auto px-6">
+                    <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4 drop-shadow-xl">
+                        Legal Education Insights & Articles
+                    </h1>
+                    <p className="text-white/90 text-lg leading-relaxed">
+                        Stay updated with the latest LLM programs, law university rankings,
+                        and expert guides from <strong>Keekan Education</strong>.
+                    </p>
                 </div>
-            ) : (
-                <div className="grid md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-6">
-                    {articles.map((a, i) => {
-                        console.log(`🧭 Article #${i + 1}`, {
-                            id: a.id,
-                            title: a.title,
-                            slug: a.slug,
-                            link: `/articles/${a.slug}`,
-                        });
+            </section>
 
-                        const slug = a.slug?.toString().trim();
-                        const href = `/articles/${slug}`;
-
-                        return (
-                            <Link
-                                key={a.id}
-                                href={href}
-                                className="block bg-white rounded-xl shadow hover:shadow-lg transition  hover:border-blue-200"
+            {/* 🧾 Articles Grid */}
+            <section className="relative z-10 max-w-6xl mx-auto px-6 py-20">
+                {articles.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+                        {articles.map((article) => (
+                            <article
+                                key={article.id}
+                                className="bg-white/90 backdrop-blur-lg rounded-2xl overflow-hidden border border-white/10 shadow-lg hover:shadow-xl transition-all flex flex-col"
                             >
-                                
-
-                                {a.image && (
-                                    <Image
-                                        src={fixUrl(a.image)}
-                                        alt={a.title}
-                                        width={400}
-                                        height={240}
-                                        className="w-full px-0 h-48 object-cover rounded-tl-md mb-3"
-                                        loading="lazy"
-                                    />
+                                {/* Thumbnail */}
+                                {article.image && (
+                                    <div className="relative h-52 w-full">
+                                        <Image
+                                            src={
+                                                article.image.startsWith("http")
+                                                    ? article.image
+                                                    : `${base}${article.image}`
+                                            }
+                                            alt={article.title}
+                                            fill
+                                            className="object-cover"
+                                        />
+                                    </div>
                                 )}
 
-                                <h2 className="text-lg font-semibold px-2 text-gray-800 mb-1 line-clamp-2">
-                                    {a.title}
-                                </h2>
+                                {/* Content */}
+                                <div className="p-6 flex flex-col flex-grow">
+                                    <h2 className="text-lg font-semibold text-blue-900 mb-2 line-clamp-2">
+                                        {article.title}
+                                    </h2>
+                                    <p className="text-sm text-gray-700 line-clamp-3 mb-4 flex-grow">
+                                        {article.description || article.excerpt}
+                                    </p>
+                                    <Link
+                                        href={`/articles/${article.slug || article.id}`}
+                                        className="inline-block bg-pink-600 hover:bg-pink-700 text-white text-sm font-semibold px-4 py-2 rounded-full self-start transition"
+                                    >
+                                        Read More →
+                                    </Link>
+                                </div>
+                            </article>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center text-white/80 py-20">
+                        <p className="text-lg">No blog posts available yet.</p>
+                        <p className="text-sm text-white/60">
+                            Check back soon — new legal education articles are published every
+                            week.
+                        </p>
+                    </div>
+                )}
+            </section>
 
-                                <p className="text-sm text-gray-600 line-clamp-3 mb-2">
-                                    {a.excerpt || a.seoDescription}
-                                </p>
-
-                                {/* <span className="text-blue-600 text-sm font-medium">
-                                    Read More →
-                                </span> */}
-                            </Link>
-                        );
-                    })}
+            {/* 💡 CTA Section */}
+            <section className="relative py-24 text-center overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#f613a3]/40 via-transparent to-[#9deff9]/40" />
+                <div className="relative z-10 max-w-3xl mx-auto px-6">
+                    <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+                        Want to Publish With Us?
+                    </h2>
+                    <p className="text-white/80 mb-8 text-lg leading-relaxed">
+                        We collaborate with law experts, universities, and researchers to
+                        publish high-quality content for global law students.
+                    </p>
+                    <Link
+                        href="/contact"
+                        className="inline-block bg-pink-600 hover:bg-pink-700 text-white px-6 py-3 rounded-full font-semibold shadow-lg transition-all"
+                    >
+                        Contact Editorial Team
+                    </Link>
                 </div>
-            )}
-
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-                <div className="flex justify-center mt-10 gap-3">
-                    {page > 1 && (
-                        <a
-                            href={`/articles?page=${page - 1}`}
-                            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded"
-                        >
-                            ← Previous
-                        </a>
-                    )}
-                    <span className="px-4 py-2 text-gray-600">
-                        Page {page} of {totalPages}
-                    </span>
-                    {page < totalPages && (
-                        <a
-                            href={`/articles?page=${page + 1}`}
-                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded"
-                        >
-                            Next →
-                        </a>
-                    )}
-                </div>
-            )}
-
-            {/* JSON-LD Schema for Google Rich Results */}
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-            />
-        </section>
+            </section>
+        </main>
     );
 }

@@ -71,7 +71,7 @@ export default function Footer() {
                         <h3 className="text-lg font-semibold mb-4">Community</h3>
                         <ul className="space-y-2 text-sm text-gray-200">
                             <li><Link href="/events" className="hover:text-red-400 transition">Events</Link></li>
-                            <li><Link href="/blog" className="hover:text-red-400 transition">Blog</Link></li>
+                            <li><Link href="/articles" className="hover:text-red-400 transition">Blog</Link></li>
                             <li><Link href="/faqs" className="hover:text-red-400 transition">FAQ</Link></li>
                             {/* <li><Link href="/invite" className="hover:text-red-400 transition">Invite a friend</Link></li> */}
                         </ul>
